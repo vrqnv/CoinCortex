@@ -1,3 +1,4 @@
+<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -5,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% load static %}
     <link rel="stylesheet" href="{% static 'style.css' %}">
-    <title>Главная</title>
+    <title>{% block title %}Главная{% endblock %}</title>
 </head>
 <body>
     <header>
@@ -15,7 +16,12 @@
                 <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
                 {% if user.is_authenticated %}
                     <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
-                    <li class="nav-right"><a href="{% url 'loginout' %}">Выйти</a></li>
+                    <li class="nav-right">
+                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">Выйти</button>
+                        </form>
+                    </li>
                 {% else %}
                     <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
                     <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
@@ -23,23 +29,30 @@
             </ul>
         </nav>
     </header>
-    
+
     <main>
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-        
         {% block content %}
-            <!-- Контент по умолчанию -->
-            <h1>Добро пожаловать в CoinCortex!</h1>
-            {% if user.is_authenticated %}
-            {% else %}
-            {% endif %}
+        <!-- Контент главной страницы -->
+        <div class="welcome-section">
+            <div class="welcome-card">
+                <h1>Добро пожаловать в CoinCortex</h1>
+                <p>Социальная сеть для общения и обмена новостями</p>
+                {% if not user.is_authenticated %}
+                <div class="auth-buttons">
+                    <a href="{% url 'login' %}" class="btn-primary">Войти</a>
+                    <a href="{% url 'register' %}" class="btn-secondary">Зарегистрироваться</a>
+                </div>
+                {% else %}
+                <div class="user-actions">
+                    <a href="{% url 'profile' %}" class="btn-primary">Мой профиль</a>
+                    <a href="{% url 'chat' %}" class="btn-secondary">Чаты</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
         {% endblock %}
     </main>
-    
+
     <footer>
         <p>CoinCortex 2025</p>
     </footer>

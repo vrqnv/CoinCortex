@@ -77,180 +77,235 @@ nav a:hover {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* Особый стиль для профиля */
-.nav-right a {
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+/* Кнопка выхода */
+.logout-btn {
+    background: rgba(239, 68, 68, 0.8);
+    color: white;
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    font-size: inherit;
 }
 
-.nav-right a:hover {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.5);
+.logout-btn:hover {
+    background: rgba(239, 68, 68, 1);
+    transform: translateY(-2px);
 }
 
 /* Основной контент */
 main {
-    max-width: 1200px;
+    max-width: 800px;
     margin: 0 auto;
     padding: 2rem;
     min-height: calc(100vh - 140px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
-/* Карточка для форм */
-.card {
+/* Контейнер профиля */
+.profile-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Карточка профиля */
+.profile-card {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     border-radius: 20px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.3);
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    width: 100%;
-    max-width: 40rem;
-    margin: 6rem auto 2rem auto;
-    text-align: center;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-}
-
-.card-header {
-    background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
-    color: white;
     padding: 2rem;
-    font-size: 1.5rem;
-    font-weight: 600;
-    text-align: center;
+    transition: transform 0.3s ease;
 }
 
-.card-body {
-    padding: 2.5rem;
+.profile-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Информация о пользователе */
+.user-info {
     display: flex;
-    flex-direction: column;
     align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.1);
 }
 
-/* Центрирование формы */
-.card-body form {
+.avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 1.5rem;
+    background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+}
+
+.user-details h1 {
+    color: #1f2937;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    text-shadow: none;
+}
+
+.join-date {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+/* Форма поста */
+.post-form-section {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 15px;
+    padding: 1.5rem;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.post-form-section h2 {
+    color: #1f2937;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.post-form-section textarea {
     width: 100%;
-    max-width: 350px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-/* Формы */
-.form-control {
-    border: 2px solid #e2e8f0;
+    height: 120px;
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
     border-radius: 12px;
-    padding: 0.75rem 1rem;
+    resize: vertical;
+    font-family: inherit;
     font-size: 1rem;
     transition: all 0.3s ease;
-    width: 100%;
-    text-align: left;
+    margin-bottom: 1rem;
 }
 
-.form-control:focus {
+.post-form-section textarea:focus {
     border-color: #7C3AED;
     box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    outline: none;
 }
 
-/* Кнопки */
-.btn-primary {
+.publish-btn {
     background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
+    color: white;
     border: none;
-    border-radius: 12px;
     padding: 0.75rem 2rem;
+    border-radius: 12px;
     font-weight: 600;
+    cursor: pointer;
     transition: all 0.3s ease;
-    width: 100%;
-    max-width: 200px;
-    margin-top: 1rem;
-    color: white !important;
+    font-size: 1rem;
 }
 
-.btn-primary:hover {
+.publish-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
-    color: white !important;
 }
 
-/* Стили для всех кнопок */
-.btn {
-    color: white !important;
-    font-weight: 600;
+/* Секция постов */
+.posts-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 2rem;
 }
 
-.btn-primary, 
-.btn-success, 
-.btn-secondary, 
-.btn-info, 
-.btn-warning, 
-.btn-danger {
-    color: white !important;
-}
-
-/* Кнопка отправки */
-button[type="submit"] {
-    color: white !important;
-}
-
-/* Алерты */
-.alert {
-    border-radius: 12px;
-    border: none;
-    padding: 1rem 1.5rem;
+.posts-section h2 {
+    color: #1f2937;
     margin-bottom: 1.5rem;
+    font-size: 1.5rem;
     text-align: center;
-    width: 100%;
 }
 
-.alert-success {
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
+/* Список постов */
+.posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
-.alert-error, .alert-danger {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: white;
+.post-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f3f4f6;
+    transition: transform 0.2s ease;
 }
 
-.alert-info {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    color: white;
+.post-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
-.alert-warning {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    color: white;
-}
-
-/* Ссылки в формах */
-.card-body a {
-    color: #7C3AED;
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.3s ease;
-}
-
-.card-body a:hover {
-    color: #4F46E5;
-    text-decoration: underline;
-}
-
-/* Заголовки */
-h1 {
-    color: white;
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 1rem;
-    font-size: 3rem;
-    font-weight: 700;
-    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.post-author {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.post-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.post-author strong {
+    color: #1f2937;
+}
+
+.post-date {
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+.post-content {
+    color: #374151;
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
+/* Нет постов */
+.no-posts {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6b7280;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 15px;
+    border: 2px dashed #d1d5db;
+}
+
+.no-posts p {
+    font-size: 1.1rem;
 }
 
 /* Подвал */
@@ -261,47 +316,7 @@ footer {
     text-align: center;
     padding: 1.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* Группы форм */
-.form-group {
-    margin-bottom: 1.5rem;
-    width: 100%;
-    text-align: left;
-}
-
-.form-label {
-    font-weight: 600;
-    color: #374151 !important;
-    margin-bottom: 0.5rem;
-    display: block;
-}
-
-/* Стили для состояний загрузки */
-.btn-primary:disabled {
-    opacity: 0.7;
-    transform: none;
-    cursor: not-allowed;
-}
-
-/* Центрирование контента */
-.col.d-flex.justify-content-center {
-    width: 100%;
-}
-
-/* Стили для страницы входа/регистрации */
-.login-container, 
-.register-container {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Центрирование текста под формой */
-.card-body > div:last-child {
-    text-align: center;
-    width: 100%;
+    margin-top: 2rem;
 }
 
 /* Адаптивность */
@@ -325,44 +340,277 @@ footer {
         margin-bottom: 0.5rem;
     }
     
-    .card {
-        margin: 3rem auto 1rem auto;
-        max-width: 90%;
-    }
-    
-    .card-body {
-        padding: 2rem 1.5rem;
-    }
-    
-    .card-body form {
-        max-width: 100%;
-    }
-    
-    .card-header {
-        padding: 1.5rem;
-    }
-    
-    h1 {
-        font-size: 2rem;
-    }
-    
     main {
         padding: 1rem;
     }
     
-    .btn-primary {
-        max-width: 100%;
+    .profile-container {
+        gap: 1rem;
+    }
+    
+    .profile-card,
+    .posts-section {
+        padding: 1.5rem;
+    }
+    
+    .user-info {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .avatar {
+        margin-right: 0;
+    }
+    
+    .user-details h1 {
+        font-size: 1.5rem;
+    }
+    
+    .post-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .post-date {
+        align-self: flex-end;
     }
 }
 
+/* Анимации */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
-/* Улучшение читаемости для длинного контента */
-.card-body p {
-    line-height: 1.6;
+.post-card {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Сообщения */
+.messages {
     margin-bottom: 1rem;
 }
 
-/* Стили для ошибок валидации */
+.alert {
+    border-radius: 12px;
+    border: none;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.alert-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.alert-error {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+/* Стили для страниц аутентификации */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    padding: 2rem 0;
+}
+
+.auth-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    width: 100%;
+    max-width: 450px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.auth-card:hover {
+    transform: translateY(-5px);
+}
+
+.auth-card .card-header {
+    background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
+
+.auth-card .card-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.auth-card .card-body {
+    padding: 2.5rem;
+}
+
+.auth-form {
+    width: 100%;
+}
+
+.auth-form .form-control {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.auth-form .form-control:focus {
+    border-color: #7C3AED;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    outline: none;
+}
+
+.auth-form .form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.form-actions {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+.form-actions .btn-primary {
+    background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+    color: white;
+    font-size: 1rem;
+}
+
+.form-actions .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+}
+
+.auth-links {
+    text-align: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.auth-links a {
+    color: #7C3AED;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.auth-links a:hover {
+    color: #4F46E5;
+    text-decoration: underline;
+}
+
+/* Стили для главной страницы */
+.welcome-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    text-align: center;
+}
+
+.welcome-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 3rem;
+    max-width: 600px;
+    width: 100%;
+}
+
+.welcome-card h1 {
+    color: #1f2937;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    text-shadow: none;
+}
+
+.welcome-card p {
+    color: #6b7280;
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+}
+
+.auth-buttons,
+.user-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 0.75rem 2rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-block;
+    text-align: center;
+    min-width: 160px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
+    color: white;
+    border: none;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+    color: white;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.9);
+    color: #7C3AED;
+    border: 2px solid #7C3AED;
+}
+
+.btn-secondary:hover {
+    background: #7C3AED;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+}
+
+/* Стили для bootstrap форм */
+.form-text {
+    color: #6b7280 !important;
+    font-size: 0.875rem;
+}
+
 .is-invalid {
     border-color: #ef4444 !important;
 }
@@ -371,7 +619,37 @@ footer {
     color: #ef4444;
     font-size: 0.875rem;
     margin-top: 0.25rem;
-    text-align: left;
-    width: 100%;
 }
 
+/* Адаптивность для форм */
+@media (max-width: 768px) {
+    .auth-card {
+        max-width: 90%;
+        margin: 1rem;
+    }
+    
+    .auth-card .card-body {
+        padding: 2rem 1.5rem;
+    }
+    
+    .welcome-card {
+        padding: 2rem 1.5rem;
+        margin: 1rem;
+    }
+    
+    .welcome-card h1 {
+        font-size: 2rem;
+    }
+    
+    .auth-buttons,
+    .user-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+        max-width: 250px;
+    }
+}
