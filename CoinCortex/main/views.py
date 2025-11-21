@@ -14,18 +14,28 @@ def chat(request):
 
 @login_required
 def profile(request):
-    """Профиль пользователя с возможностью создания постов"""
+    """Профиль пользователя с возможностью создания и удаления постов"""
     if request.method == 'POST':
-        # Создание нового поста из профиля
-        content = request.POST.get('content')
-        if content and content.strip():
-            Post.objects.create(
-                author=request.user,
-                content=content.strip(),
-                wall_owner=request.user
-            )
-            # Редирект на эту же страницу чтобы обновить список постов
-            return redirect('profile')
+        # Создание нового поста
+        if 'content' in request.POST:
+            content = request.POST.get('content')
+            if content and content.strip():
+                Post.objects.create(
+                    author=request.user,
+                    content=content.strip(),
+                    wall_owner=request.user
+                )
+                return redirect('profile')
+        
+        # Удаление поста
+        elif 'delete_post' in request.POST:
+            post_id = request.POST.get('delete_post')
+            try:
+                post = Post.objects.get(id=post_id, author=request.user)
+                post.delete()
+                return redirect('profile')
+            except Post.DoesNotExist:
+                pass
     
     # Получаем последние посты текущего пользователя
     user_posts = Post.objects.filter(author=request.user).order_by('-created')[:10]

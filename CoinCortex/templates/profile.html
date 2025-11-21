@@ -58,33 +58,43 @@
             </div>
 
             <!-- Блок последних постов пользователя -->
-            <div class="posts-section">
-                <h2>Мои последние посты</h2>
-                <div class="posts-list">
-                    {% if posts %}
-                        {% for post in posts %}
-                        <div class="post-card">
-                            <div class="post-header">
-                                <div class="post-author">
-                                    <div class="post-avatar">
-                                        {{ post.author.username|first|upper }}
-                                    </div>
-                                    <strong>{{ post.author.username }}</strong>
-                                </div>
-                                <span class="post-date">{{ post.created|date:"d.m.Y H:i" }}</span>
-                            </div>
-                            <div class="post-content">
-                                {{ post.content|linebreaksbr }}
-                            </div>
+<!-- Блок последних постов пользователя -->
+<div class="posts-section">
+    <h2>Мои последние посты</h2>
+    <div class="posts-list">
+        {% if posts %}
+            {% for post in posts %}
+            <div class="post-card">
+                <div class="post-header">
+                    <div class="post-author">
+                        <div class="post-avatar">
+                            {{ post.author.username|first|upper }}
                         </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="no-posts">
-                            <p>У вас пока нет постов</p>
-                        </div>
-                    {% endif %}
+                        <strong>{{ post.author.username }}</strong>
+                    </div>
+                    <div class="post-actions">
+                        <span class="post-date">{{ post.created|date:"d.m.Y H:i" }}</span>
+                        <form method="POST" class="delete-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="delete_post" value="{{ post.id }}">
+                            <button type="submit" class="delete-btn" title="Удалить пост">
+                                🗑️
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="post-content">
+                    {{ post.content|linebreaksbr }}
                 </div>
             </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-posts">
+                <p>У вас пока нет постов</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
         </div>
     </main>
 
