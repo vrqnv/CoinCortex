@@ -25,18 +25,20 @@ SECRET_KEY = 'django-insecure-b0xp&exl7$&j_^8x6bx-zt4ymqv7bt@b72kop7&l^tip6zg92%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1']
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    # ... (Встроенные приложения)
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_bootstrap5',
     'main'
 ]
 
@@ -123,7 +125,13 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
+# AUTH_USER_MODEL = 'users.CustomUser'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGIN_REDIRECT_URL = 'index'
+LOGOUT_REDIRECT_URL = 'index'
+LOGIN_URL = 'login'
