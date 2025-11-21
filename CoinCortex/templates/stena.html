@@ -1,0 +1,50 @@
+{% extends "index.html" %}
+{% block content %}
+  <h2 style="margin-bottom: 20px; color: #2a5885;">Новости</h2>
+
+  {% if user.is_authenticated %}
+  <div class="post">
+      <div class="post-header">
+          <div class="avatar"></div>
+          <div>
+              <strong>{{ user.first_name }} {{ user.last_name }}</strong>
+          </div>
+      </div>
+      <div class="post-content">
+          <form method="post">
+              {% csrf_token %}
+              <textarea name="content" rows="3" placeholder="Что у вас нового?" 
+                      style="width: 100%; padding: 10px; border: 1px solid #d3d9de; border-radius: 3px; resize: vertical;"></textarea>
+              <button type="submit" class="btn" style="margin-top: 10px;">Опубликовать</button>
+          </form>
+      </div>
+  </div>
+  {% endif %}
+
+  <div id="posts">
+      {% for post in posts %}
+      <div class="post">
+          <div class="post-header">
+              <div class="avatar"></div>
+              <div>
+                  <strong>{{ post.author.first_name }} {{ post.author.last_name }}</strong>
+                  <div style="color: #656565; font-size: 12px;">{{ post.created|date:"d.m.Y в H:i" }}</div>
+              </div>
+          </div>
+          <div class="post-content">
+              {{ post.content|linebreaks }}
+          </div>
+          <div class="post-actions">
+              <button class="btn" style="background: #f0f2f5; color: #656565;">Нравится ({{ post.likes_count }})</button>
+              <button class="btn" style="background: #f0f2f5; color: #656565;">Комментировать</button>
+          </div>
+      </div>
+      {% empty %}
+      <div class="post">
+          <div class="post-content">
+              <p>Пока нет записей на стене. Будьте первым!</p>
+          </div>
+      </div>
+      {% endfor %}
+  </div>
+{% endblock %}

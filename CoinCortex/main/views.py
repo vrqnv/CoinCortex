@@ -3,6 +3,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from .models import Post
 
 def index(request):
     return render(request, 'index.html')
@@ -48,3 +49,22 @@ def logout_view(request):
         logout(request)
         return redirect('login')  # Изменил на 'login' вместо 'index'
     return render(request, 'registration/loginout.html')  # Создайте этот шаблон
+
+
+@login_required
+def stena(request):
+    """Лента новостей - все посты"""
+    if request.method == 'POST':
+        # Создание нового поста
+        content = request.POST.get('content')
+        if content:
+            Post.objects.create(
+                author=request.user,
+                content=content,
+                wall_owner=request.user
+            )
+            return redirect('stena')  # редирект после создания поста
+    
+    posts = Post.objects.all().order_by('-created')[:20]
+    return render(request, 'stena.html', {'posts': posts}) 
+
