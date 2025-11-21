@@ -9,8 +9,15 @@ class Post(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     wall_owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wall_posts')
     
+    class Meta:
+        ordering = ['-created']
+    
     def __str__(self):
-        return f'Post by {self.author} on {self.created}'
+        return f'Post by {self.author} at {self.created}'
+    
+    def can_delete(self, user):
+        """Проверяет, может ли пользователь удалить пост"""
+        return self.author == user
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')

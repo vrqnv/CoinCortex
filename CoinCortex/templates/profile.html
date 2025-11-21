@@ -163,12 +163,14 @@
                     <div class="friends-list">
                         {% if friends %}
                             {% for friend in friends %}
-                            <div class="friend-item">
-                                <div class="friend-avatar">
-                                    {{ friend.username|first|upper }}
+                                <div class="friend-item">
+                                    <div class="friend-avatar">
+                                        {{ friend.username|first|upper }}
+                                    </div>
+                                    <a href="{% url 'user_profile' friend.username %}" class="friend-username">
+                                        {{ friend.username }}
+                                    </a>
                                 </div>
-                                <span class="friend-username">{{ friend.username }}</span>
-                            </div>
                             {% endfor %}
                         {% else %}
                             <p class="no-friends">У вас пока нет друзей</p>

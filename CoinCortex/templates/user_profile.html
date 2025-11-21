@@ -1,0 +1,137 @@
+<!-- templates/user_profile.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>Профиль - {{ profile_user.username }}</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
+                <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
+                {% if user.is_authenticated %}
+                    <li class="nav-right"><a href="{% url 'profile' %}">Мой профиль</a></li>
+                    <li class="nav-right">
+                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">Выйти</button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
+                    <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Сообщения -->
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="profile-layout">
+            <!-- Левая колонка - профиль и посты -->
+            <div class="profile-main">
+                <div class="profile-card">
+                    <div class="user-info">
+                        <div class="avatar">
+                            <div class="default-avatar">
+                                {{ profile_user.username|first|upper }}
+                            </div>
+                        </div>
+                        <div class="user-details">
+                            <h1>{{ profile_user.username }}</h1>
+                            <p class="join-date">Зарегистрирован: {{ profile_user.date_joined|date:"d.m.Y" }}</p>
+                            
+                            <!-- Кнопки действий с друзьями -->
+                            <div class="friend-actions">
+                                {% if user.username != profile_user.username %}
+                                    {% if is_friend %}
+                                        <span class="friend-status">✅ Друг</span>
+                                    {% elif friend_request_sent %}
+                                        <span class="friend-status">⏳ Заявка отправлена</span>
+                                    {% elif incoming_request %}
+                                        <form method="POST" action="{% url 'profile' %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="accept_friend" value="{{ incoming_request.id }}">
+                                            <button type="submit" class="accept-friend-btn">Принять заявку</button>
+                                        </form>
+                                    {% else %}
+                                        <form method="POST" action="{% url 'profile' %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="add_friend" value="{{ profile_user.username }}">
+                                            <button type="submit" class="add-friend-btn">Добавить в друзья</button>
+                                        </form>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Блок постов пользователя -->
+                <div class="posts-section">
+                    <h2>Посты {{ profile_user.username }}</h2>
+                    <div class="posts-list">
+                        {% if posts %}
+                            {% for post in posts %}
+                            <div class="post-card">
+                                <div class="post-header">
+                                    <div class="post-author">
+                                        <div class="post-avatar">
+                                            {{ post.author.username|first|upper }}
+                                        </div>
+                                        <strong>{{ post.author.username }}</strong>
+                                    </div>
+                                    <span class="post-date">{{ post.created|date:"d.m.Y H:i" }}</span>
+                                </div>
+                                <div class="post-content">
+                                    {{ post.content|linebreaksbr }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="no-posts">
+                                <p>{{ profile_user.username }} пока не опубликовал постов</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Правая колонка - информация -->
+            <div class="friends-sidebar">
+                <div class="info-section">
+                    <h3>Информация</h3>
+                    <div class="user-stats">
+                        <p>Постов: {{ posts.count }}</p>
+                        <p>На сайте с: {{ profile_user.date_joined|date:"d.m.Y" }}</p>
+                    </div>
+                </div>
+
+                <!-- Кнопка назад -->
+                <div class="back-section">
+                    <a href="{% url 'profile' %}" class="back-btn">← Назад к моему профилю</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>CoinCortex 2025</p>
+    </footer>
+</body>
+</html>

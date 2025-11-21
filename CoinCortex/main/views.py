@@ -3,6 +3,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import Q
 from .models import Post, User, Friendship
 
 def index(request):
@@ -31,6 +32,7 @@ def profile(request):
                     content=content.strip(),
                     wall_owner=request.user
                 )
+                messages.success(request, 'Пост успешно опубликован!')
                 return redirect('profile')
         
         # Удаление поста
@@ -39,24 +41,50 @@ def profile(request):
             try:
                 post = Post.objects.get(id=post_id, author=request.user)
                 post.delete()
-                return redirect('profile')
+                messages.success(request, 'Пост удален')
             except Post.DoesNotExist:
-                pass
+                messages.error(request, 'Пост не найден')
+            return redirect('profile')
         
         # Добавление в друзья
         elif 'add_friend' in request.POST:
             username = request.POST.get('add_friend')
             try:
                 friend_user = User.objects.get(username=username)
-                if friend_user != request.user:
-                    Friendship.objects.get_or_create(
-                        from_user=request.user,
-                        to_user=friend_user,
-                        defaults={'accepted': False}
-                    )
+                if friend_user == request.user:
+                    messages.error(request, 'Нельзя добавить себя в друзья')
+                else:
+                    # Проверяем, нет ли уже существующей дружбы или заявки
+                    existing_friendship = Friendship.objects.filter(
+                        Q(from_user=request.user, to_user=friend_user) |
+                        Q(from_user=friend_user, to_user=request.user)
+                    ).first()
+                    
+                    if existing_friendship:
+                        if existing_friendship.accepted:
+                            messages.info(request, f'Вы уже друзья с {friend_user.username}')
+                        else:
+                            if existing_friendship.from_user == request.user:
+                                messages.info(request, f'Вы уже отправили заявку {friend_user.username}')
+                            else:
+                                # Принимаем входящую заявку
+                                existing_friendship.accepted = True
+                                existing_friendship.save()
+                                messages.success(request, f'Вы приняли заявку от {friend_user.username}')
+                    else:
+                        Friendship.objects.create(
+                            from_user=request.user,
+                            to_user=friend_user,
+                            accepted=False
+                        )
+                        messages.success(request, f'Заявка отправлена {friend_user.username}')
+                        
             except User.DoesNotExist:
-                pass
-            return redirect('profile')
+                messages.error(request, 'Пользователь не найден')
+            
+            # Редирект на ту же страницу, откуда пришел запрос
+            referer = request.META.get('HTTP_REFERER', 'profile')
+            return redirect(referer)
         
         # Принятие заявки в друзья
         elif 'accept_friend' in request.POST:
@@ -69,8 +97,28 @@ def profile(request):
                 )
                 friendship.accepted = True
                 friendship.save()
+                messages.success(request, f'Вы приняли заявку от {friendship.from_user.username}')
             except Friendship.DoesNotExist:
-                pass
+                messages.error(request, 'Заявка не найдена')
+            
+            # Редирект на ту же страницу, откуда пришел запрос
+            referer = request.META.get('HTTP_REFERER', 'profile')
+            return redirect(referer)
+        
+        # Удаление друга
+        elif 'remove_friend' in request.POST:
+            username = request.POST.get('remove_friend')
+            try:
+                friend_user = User.objects.get(username=username)
+                # Удаляем обе стороны дружбы
+                Friendship.objects.filter(
+                    Q(from_user=request.user, to_user=friend_user) |
+                    Q(from_user=friend_user, to_user=request.user),
+                    accepted=True
+                ).delete()
+                messages.success(request, f'{friend_user.username} удален из друзей')
+            except User.DoesNotExist:
+                messages.error(request, 'Пользователь не найден')
             return redirect('profile')
     
     # Получаем последние посты текущего пользователя
@@ -82,6 +130,12 @@ def profile(request):
     # Получаем входящие заявки в друзья
     incoming_requests = Friendship.objects.filter(
         to_user=request.user,
+        accepted=False
+    )
+    
+    # Получаем исходящие заявки
+    outgoing_requests = Friendship.objects.filter(
+        from_user=request.user,
         accepted=False
     )
     
@@ -98,6 +152,7 @@ def profile(request):
         'posts': user_posts,
         'friends': friends,
         'incoming_requests': incoming_requests,
+        'outgoing_requests': outgoing_requests,
         'search_results': search_results,
         'search_query': search_query
     })
@@ -133,5 +188,53 @@ def login_view(request):
 def logout_view(request):
     if request.method == 'POST':
         logout(request)
-        return redirect('login')  # Изменил на 'login' вместо 'index'
-    return render(request, 'registration/loginout.html')  # Создайте этот шаблон
+        return redirect('login')
+    return render(request, 'registration/logout.html')
+
+@login_required
+def user_profile(request, username):
+    """Просмотр профиля другого пользователя"""
+    try:
+        profile_user = User.objects.get(username=username)
+        
+        # Если пользователь смотрит свой профиль - редирект на свой профиль
+        if profile_user == request.user:
+            return redirect('profile')
+        
+        # Проверяем, является ли пользователь другом
+        is_friend = Friendship.objects.filter(
+            (Q(from_user=request.user, to_user=profile_user) | 
+             Q(from_user=profile_user, to_user=request.user)),
+            accepted=True
+        ).exists()
+        
+        # Получаем посты пользователя
+        user_posts = Post.objects.filter(author=profile_user).order_by('-created')[:10]
+        
+        # Проверяем, отправил ли текущий пользователь заявку в друзья
+        friend_request_sent = Friendship.objects.filter(
+            from_user=request.user,
+            to_user=profile_user,
+            accepted=False
+        ).exists()
+        
+        # Проверяем, есть ли входящая заявка от этого пользователя
+        incoming_request = Friendship.objects.filter(
+            from_user=profile_user,
+            to_user=request.user,
+            accepted=False
+        ).first()
+        
+        context = {
+            'profile_user': profile_user,
+            'posts': user_posts,
+            'is_friend': is_friend,
+            'friend_request_sent': friend_request_sent,
+            'incoming_request': incoming_request,
+        }
+        
+        return render(request, 'user_profile.html', context)
+        
+    except User.DoesNotExist:
+        messages.error(request, 'Пользователь не найден')
+        return redirect('profile')
