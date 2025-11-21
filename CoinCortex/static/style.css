@@ -1,0 +1,107 @@
+
+    /* Базовые стили */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #ffffff;
+        color: #333333;
+        line-height: 1.6;
+    }
+
+    /* Хедер */
+    header {
+        background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
+        padding: 1rem 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Навигация */
+    nav ul {
+        display: flex;
+        list-style: none;
+        align-items: center;
+    }
+
+    /* Левые кнопки (Главная, Чаты) */
+    .nav-left {
+        display: flex;
+        gap: 2rem;
+        margin-right: auto; /* Прижимает к левому краю */
+    }
+
+    /* Правая кнопка (Профиль) */
+    .nav-right {
+        margin-left: auto; /* Прижимает к правому краю */
+    }
+
+    /* Ссылки */
+    nav a {
+        color: white;
+        text-decoration: none;
+        padding: 0.7rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    nav a:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+    }
+
+    /* Особый стиль для профиля */
+    .nav-right a {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .nav-right a:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Основной контент */
+    main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    h1 {
+        color: #1F2937;
+        margin-bottom: 1rem;
+        font-size: 2.5rem;
+    }
+
+    /* Подвал */
+    footer {
+        background: #F9FAFB;
+        color: #6B7280;
+        text-align: center;
+        padding: 1.5rem;
+        margin-top: 3rem;
+        border-top: 1px solid #E5E7EB;
+    }
+
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        header {
+            padding: 1rem;
+        }
+        
+        nav ul {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .nav-left, .nav-right {
+            margin: 0;
+            justify-content: center;
+        }
+    }

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Главная</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
+                <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
+                <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h1>Добро пожаловать!</h1>
+    </main>
+    <footer>
+        <p>CoinCortex 2025</p>
+    </footer>
+</body>
+</html>
