@@ -29,21 +29,24 @@ nav ul {
     align-items: center;
     max-width: 1200px;
     margin: 0 auto;
+    width: 100%;
 }
 
-/* Левые кнопки */
+/* Левые кнопки - прижимаем к левому краю */
 .nav-left {
     display: flex;
     gap: 1.5rem;
     margin-right: auto;
 }
 
-/* Правая кнопка */
+/* Правые кнопки - прижимаем к правому краю */
 .nav-right {
+    display: flex;
+    gap: 1.5rem;
     margin-left: auto;
 }
 
-/* Ссылки */
+/* Ссылки - по умолчанию прозрачные */
 nav a {
     color: white;
     text-decoration: none;
@@ -54,6 +57,7 @@ nav a {
     display: inline-block;
     position: relative;
     overflow: hidden;
+    background: transparent;
 }
 
 nav a::before {
@@ -71,17 +75,18 @@ nav a:hover::before {
     left: 100%;
 }
 
+/* При наведении - подсвечиваем */
 nav a:hover {
     background: rgba(255, 255, 255, 0.15);
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* Кнопка выхода */
+/* Кнопка выхода - по умолчанию прозрачная */
 .logout-btn {
-    background: rgba(239, 68, 68, 0.8);
+    background: transparent;
     color: white;
-    border: none;
+    border: 0px solid rgba(255, 255, 255, 0.2);
     padding: 0.7rem 1.5rem;
     border-radius: 12px;
     cursor: pointer;
@@ -91,9 +96,12 @@ nav a:hover {
     font-size: inherit;
 }
 
+/* Кнопка выхода при наведении - красный цвет */
 .logout-btn:hover {
-    background: rgba(239, 68, 68, 1);
+    background: rgba(239, 68, 68, 0.8);
+    border-color: rgba(239, 68, 68, 0.5);
     transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.2);
 }
 
 /* Основной контент */
