@@ -1,4 +1,4 @@
-<!-- templates/main/index.html -->
+<!-- templates/profile.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% load static %}
     <link rel="stylesheet" href="{% static 'style.css' %}">
-    <title>Главная</title>
+    <title>Профиль - {{ user.username }}</title>
 </head>
 <body>
     <header>
@@ -16,7 +16,12 @@
                 <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
                 {% if user.is_authenticated %}
                     <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
-                    <li class="nav-right"><a href="{% url 'loginout' %}">Выйти</a></li>
+                    <li class="nav-right">
+                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">Выйти</button>
+                        </form>
+                    </li>
                 {% else %}
                     <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
                     <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
@@ -24,55 +29,65 @@
             </ul>
         </nav>
     </header>
-    {% block content %}
-    <h2 style="margin-bottom: 20px; color: #2a5885;">Новости</h2>
 
-    {% if user.is_authenticated %}
-    <div class="post">
-        <div class="post-header">
-            <div class="avatar"></div>
-            <div>
-                <strong>{{ user.first_name }} {{ user.last_name }}</strong>
-            </div>
-        </div>
-        <div class="post-content">
-            <form method="post">
-                {% csrf_token %}
-                <textarea name="content" rows="3" placeholder="Что у вас нового?" 
-                        style="width: 100%; padding: 10px; border: 1px solid #d3d9de; border-radius: 3px; resize: vertical;"></textarea>
-                <button type="submit" class="btn" style="margin-top: 10px;">Опубликовать</button>
-            </form>
-        </div>
-    </div>
-    {% endif %}
+    <main>
+        <div class="profile-container">
+            <!-- Блок информации о пользователе -->
+            <div class="profile-card">
+                <div class="user-info">
+                    <div class="avatar">
+                        <div class="default-avatar">
+                            {{ user.username|first|upper }}
+                        </div>
+                    </div>
+                    <div class="user-details">
+                        <h1>{{ user.username }}</h1>
+                        <p class="join-date">Зарегистрирован: {{ user.date_joined|date:"d.m.Y" }}</p>
+                    </div>
+                </div>
 
-    <div id="posts">
-        {% for post in posts %}
-        <div class="post">
-            <div class="post-header">
-                <div class="avatar"></div>
-                <div>
-                    <strong>{{ post.author.first_name }} {{ post.author.last_name }}</strong>
-                    <div style="color: #656565; font-size: 12px;">{{ post.created|date:"d.m.Y в H:i" }}</div>
+                <!-- Форма для создания поста -->
+                <div class="post-form-section">
+                    <h2>Что у вас нового?</h2>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <textarea name="content" placeholder="Поделитесь своими мыслями..." required></textarea>
+                        <button type="submit" class="publish-btn">Опубликовать</button>
+                    </form>
                 </div>
             </div>
-            <div class="post-content">
-                {{ post.content|linebreaks }}
-            </div>
-            <div class="post-actions">
-                <button class="btn" style="background: #f0f2f5; color: #656565;">Нравится ({{ post.likes_count }})</button>
-                <button class="btn" style="background: #f0f2f5; color: #656565;">Комментировать</button>
+
+            <!-- Блок последних постов пользователя -->
+            <div class="posts-section">
+                <h2>Мои последние посты</h2>
+                <div class="posts-list">
+                    {% if posts %}
+                        {% for post in posts %}
+                        <div class="post-card">
+                            <div class="post-header">
+                                <div class="post-author">
+                                    <div class="post-avatar">
+                                        {{ post.author.username|first|upper }}
+                                    </div>
+                                    <strong>{{ post.author.username }}</strong>
+                                </div>
+                                <span class="post-date">{{ post.created|date:"d.m.Y H:i" }}</span>
+                            </div>
+                            <div class="post-content">
+                                {{ post.content|linebreaksbr }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-posts">
+                            <p>У вас пока нет постов</p>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
-        {% empty %}
-        <div class="post">
-            <div class="post-content">
-                <p>Пока нет записей на стене. Будьте первым!</p>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endblock %}
+    </main>
+
     <footer>
         <p>CoinCortex 2025</p>
     </footer>

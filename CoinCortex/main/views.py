@@ -14,7 +14,25 @@ def chat(request):
 
 @login_required
 def profile(request):
-    return render(request, 'profile.html', {'user': request.user})
+    """Профиль пользователя с возможностью создания постов"""
+    if request.method == 'POST':
+        # Создание нового поста из профиля
+        content = request.POST.get('content')
+        if content and content.strip():
+            Post.objects.create(
+                author=request.user,
+                content=content.strip(),
+                wall_owner=request.user
+            )
+            # Редирект на эту же страницу чтобы обновить список постов
+            return redirect('profile')
+    
+    # Получаем последние посты текущего пользователя
+    user_posts = Post.objects.filter(author=request.user).order_by('-created')[:10]
+    return render(request, 'profile.html', {
+        'user': request.user,
+        'posts': user_posts
+    })
 
 def register(request):
     if request.method == 'POST':
@@ -49,22 +67,3 @@ def logout_view(request):
         logout(request)
         return redirect('login')  # Изменил на 'login' вместо 'index'
     return render(request, 'registration/loginout.html')  # Создайте этот шаблон
-
-
-@login_required
-def stena(request):
-    """Лента новостей - все посты"""
-    if request.method == 'POST':
-        # Создание нового поста
-        content = request.POST.get('content')
-        if content:
-            Post.objects.create(
-                author=request.user,
-                content=content,
-                wall_owner=request.user
-            )
-            return redirect('stena')  # редирект после создания поста
-    
-    posts = Post.objects.all().order_by('-created')[:20]
-    return render(request, 'stena.html', {'posts': posts}) 
-
