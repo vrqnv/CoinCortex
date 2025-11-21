@@ -33,22 +33,62 @@
     <main>
         {% block content %}
         <!-- Контент главной страницы -->
+        {% if not user.is_authenticated %}
         <div class="welcome-section">
             <div class="welcome-card">
                 <h1>Добро пожаловать в CoinCortex</h1>
                 <p>Социальная сеть для общения и обмена новостями</p>
-                {% if not user.is_authenticated %}
                 <div class="auth-buttons">
                     <a href="{% url 'login' %}" class="btn-primary">Войти</a>
                     <a href="{% url 'register' %}" class="btn-secondary">Зарегистрироваться</a>
                 </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Лента постов для авторизованных пользователей -->
+        <div class="feed-container">
+            <div class="feed-header">
+                <h1>Лента новостей</h1>
+                <p>Последние посты от сообществ</p>
+            </div>
+
+            <div class="posts-feed">
+                {% if community_posts %}
+                    {% for post in community_posts %}
+                    <div class="post-card">
+                        <div class="post-header">
+                            <div class="post-author">
+                                <div class="post-avatar">
+                                    {{ post.author.username|first|upper }}
+                                </div>
+                                <div class="author-info">
+                                    <strong>{{ post.author.username }}</strong>
+                                    <span class="post-community">Сообщество</span>
+                                </div>
+                            </div>
+                            <span class="post-date">{{ post.created|date:"d.m.Y H:i" }}</span>
+                        </div>
+                        <div class="post-content">
+                            {{ post.content|linebreaksbr }}
+                        </div>
+                        <div class="post-actions">
+                            <button class="like-btn">❤️</button>
+                            <button class="comment-btn">💬</button>
+                            <button class="share-btn">↗️</button>
+                        </div>
+                    </div>
+                    {% endfor %}
                 {% else %}
+                    <div class="no-posts">
+                        <p>Пока нет постов от сообществ</p>
+                        <p>Будьте первым, кто поделится новостью!</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
+        {% endif %}
         {% endblock %}
     </main>
-
     <footer>
         <p>CoinCortex 2025</p>
     </footer>

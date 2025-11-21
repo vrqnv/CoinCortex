@@ -106,7 +106,7 @@ nav a:hover {
 
 /* Основной контент */
 main {
-    max-width: 800px;
+    max-width: 1400px; /* Увеличил максимальную ширину */
     margin: 0 auto;
     padding: 2rem;
     min-height: calc(100vh - 140px);
@@ -704,4 +704,379 @@ footer {
 .post-date {
     color: #6b7280;
     font-size: 0.85rem;
+}
+
+/* Стили для ленты на главной странице */
+.feed-container {
+    max-width: 900px; /* Увеличил ширину ленты */
+    margin: 0 auto;
+    padding: 2rem 0;
+}
+
+.feed-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.feed-header h1 {
+    color: white;
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.feed-header p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.1rem;
+}
+
+.posts-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Дополнительные стили для постов в ленте */
+.author-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.post-community {
+    font-size: 0.75rem;
+    color: #7C3AED;
+    background: rgba(124, 58, 237, 0.1);
+    padding: 0.1rem 0.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.post-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f3f4f6;
+}
+
+.like-btn, .comment-btn, .share-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+}
+
+.like-btn:hover, .comment-btn:hover, .share-btn:hover {
+    background: rgba(124, 58, 237, 0.1);
+    transform: scale(1.1);
+}
+
+/* Адаптивность для ленты */
+@media (max-width: 768px) {
+    .feed-container {
+        padding: 1rem 0;
+    }
+    
+    .feed-header h1 {
+        font-size: 2rem;
+    }
+    
+    .posts-feed {
+        gap: 1rem;
+    }
+}
+
+/* Стили для layout профиля */
+.profile-layout {
+    display: grid;
+    grid-template-columns: 3fr 1fr; /* Изменил пропорции: 3:1 вместо 2:1 */
+    gap: 2rem;
+    max-width: 1400px; /* Увеличил максимальную ширину */
+    margin: 0 auto;
+}
+
+.profile-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    min-width: 0; /* Для правильного сжатия */
+}
+
+.friends-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-width: 300px; /* Сделал уже боковую панель */
+    max-width: 350px;
+}
+
+/* Стили для поиска */
+.search-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.search-section h3 {
+    color: #1f2937;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.search-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.search-input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.search-input:focus {
+    border-color: #7C3AED;
+    outline: none;
+}
+
+.search-btn {
+    background: #7C3AED;
+    color: white;
+    border: none;
+    padding: 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.search-btn:hover {
+    background: #6d28d9;
+}
+
+/* Результаты поиска */
+.search-results {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 1rem;
+}
+
+.search-results h4 {
+    color: #374151;
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+}
+
+.search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+}
+
+.search-result-item:hover {
+    background: #f9fafb;
+}
+
+.result-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.result-username {
+    flex: 1;
+    color: #374151;
+    font-weight: 500;
+}
+
+.add-friend-form {
+    margin: 0;
+}
+
+.add-friend-btn {
+    background: #10b981;
+    color: white;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.add-friend-btn:hover {
+    background: #059669;
+    transform: scale(1.1);
+}
+
+/* Заявки в друзья */
+.requests-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.requests-section h3 {
+    color: #1f2937;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.request-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+}
+
+.request-item:hover {
+    background: #f9fafb;
+}
+
+.request-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.request-username {
+    flex: 1;
+    color: #374151;
+    font-weight: 500;
+}
+
+.accept-friend-form {
+    margin: 0;
+}
+
+.accept-friend-btn {
+    background: #10b981;
+    color: white;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.accept-friend-btn:hover {
+    background: #059669;
+    transform: scale(1.1);
+}
+
+/* Список друзей */
+.friends-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.friends-section h3 {
+    color: #1f2937;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.friends-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.friend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+}
+
+.friend-item:hover {
+    background: #f9fafb;
+}
+
+.friend-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.friend-username {
+    color: #374151;
+    font-weight: 500;
+}
+
+.no-results, .no-friends {
+    color: #6b7280;
+    text-align: center;
+    padding: 1rem;
+    font-style: italic;
+}
+
+/* Адаптивность */
+@media (max-width: 1024px) {
+    .profile-layout {
+        grid-template-columns: 2fr 1fr; /* На планшетах 2:1 */
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-layout {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .friends-sidebar {
+        order: -1;
+        min-width: auto;
+        max-width: none;
+    }
+}
+
+/* Обновленные стили для информации о пользователе */
+.friends-count {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin: 0;
 }

@@ -31,70 +31,151 @@
     </header>
 
     <main>
-        <div class="profile-container">
-            <!-- Блок информации о пользователе -->
-            <div class="profile-card">
-                <div class="user-info">
-                    <div class="avatar">
-                        <div class="default-avatar">
-                            {{ user.username|first|upper }}
+        <div class="profile-layout">
+            <!-- Левая колонка - профиль и посты -->
+            <div class="profile-main">
+                <div class="profile-card">
+                    <div class="user-info">
+                        <div class="avatar">
+                            <div class="default-avatar">
+                                {{ user.username|first|upper }}
+                            </div>
+                        </div>
+                        <div class="user-details">
+                            <h1>{{ user.username }}</h1>
+                            <p class="join-date">Зарегистрирован: {{ user.date_joined|date:"d.m.Y" }}</p>
+                            <p class="friends-count">Друзей: {{ friends.count }}</p>
                         </div>
                     </div>
-                    <div class="user-details">
-                        <h1>{{ user.username }}</h1>
-                        <p class="join-date">Зарегистрирован: {{ user.date_joined|date:"d.m.Y" }}</p>
-                    </div>
-                </div>
 
-                <!-- Форма для создания поста -->
-                <div class="post-form-section">
-                    <h2>Что у вас нового?</h2>
-                    <form method="POST">
-                        {% csrf_token %}
-                        <textarea name="content" placeholder="Поделитесь своими мыслями..." required></textarea>
-                        <button type="submit" class="publish-btn">Опубликовать</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Блок последних постов пользователя -->
-<!-- Блок последних постов пользователя -->
-<div class="posts-section">
-    <h2>Мои последние посты</h2>
-    <div class="posts-list">
-        {% if posts %}
-            {% for post in posts %}
-            <div class="post-card">
-                <div class="post-header">
-                    <div class="post-author">
-                        <div class="post-avatar">
-                            {{ post.author.username|first|upper }}
-                        </div>
-                        <strong>{{ post.author.username }}</strong>
-                    </div>
-                    <div class="post-actions">
-                        <span class="post-date">{{ post.created|date:"d.m.Y H:i" }}</span>
-                        <form method="POST" class="delete-form">
+                    <!-- Форма для создания поста -->
+                    <div class="post-form-section">
+                        <h2>Что у вас нового?</h2>
+                        <form method="POST">
                             {% csrf_token %}
-                            <input type="hidden" name="delete_post" value="{{ post.id }}">
-                            <button type="submit" class="delete-btn" title="Удалить пост">
-                                🗑️
-                            </button>
+                            <textarea name="content" placeholder="Поделитесь своими мыслями..." required></textarea>
+                            <button type="submit" class="publish-btn">Опубликовать</button>
                         </form>
                     </div>
                 </div>
-                <div class="post-content">
-                    {{ post.content|linebreaksbr }}
+
+                <!-- Блок последних постов пользователя -->
+                <div class="posts-section">
+                    <h2>Мои последние посты</h2>
+                    <div class="posts-list">
+                        {% if posts %}
+                            {% for post in posts %}
+                            <div class="post-card">
+                                <div class="post-header">
+                                    <div class="post-author">
+                                        <div class="post-avatar">
+                                            {{ post.author.username|first|upper }}
+                                        </div>
+                                        <strong>{{ post.author.username }}</strong>
+                                    </div>
+                                    <div class="post-actions">
+                                        <span class="post-date">{{ post.created|date:"d.m.Y H:i" }}</span>
+                                        <form method="POST" class="delete-form">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="delete_post" value="{{ post.id }}">
+                                            <button type="submit" class="delete-btn" title="Удалить пост">
+                                                🗑️
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="post-content">
+                                    {{ post.content|linebreaksbr }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="no-posts">
+                                <p>У вас пока нет постов</p>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-            {% endfor %}
-        {% else %}
-            <div class="no-posts">
-                <p>У вас пока нет постов</p>
+
+            <!-- Правая колонка - друзья и поиск -->
+            <div class="friends-sidebar">
+                <!-- Поиск друзей -->
+                <div class="search-section">
+                    <h3>Поиск друзей</h3>
+                    <form method="GET" class="search-form">
+                        <input type="text" name="search" value="{{ search_query }}" placeholder="Введите имя пользователя..." class="search-input">
+                        <button type="submit" class="search-btn">🔍</button>
+                    </form>
+
+                    <!-- Результаты поиска -->
+                    {% if search_query %}
+                    <div class="search-results">
+                        <h4>Результаты поиска:</h4>
+                        {% if search_results %}
+                            {% for result in search_results %}
+                            <div class="search-result-item">
+                                <div class="result-avatar">
+                                    {{ result.username|first|upper }}
+                                </div>
+                                <span class="result-username">{{ result.username }}</span>
+                                <form method="POST" class="add-friend-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="add_friend" value="{{ result.username }}">
+                                    <button type="submit" class="add-friend-btn" title="Добавить в друзья">
+                                        +
+                                    </button>
+                                </form>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="no-results">Пользователи не найдены</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Входящие заявки в друзья -->
+                {% if incoming_requests %}
+                <div class="requests-section">
+                    <h3>Заявки в друзья</h3>
+                    {% for request in incoming_requests %}
+                    <div class="request-item">
+                        <div class="request-avatar">
+                            {{ request.from_user.username|first|upper }}
+                        </div>
+                        <span class="request-username">{{ request.from_user.username }}</span>
+                        <form method="POST" class="accept-friend-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="accept_friend" value="{{ request.id }}">
+                            <button type="submit" class="accept-friend-btn" title="Принять заявку">
+                                ✓
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Список друзей -->
+                <div class="friends-section">
+                    <h3>Мои друзья</h3>
+                    <div class="friends-list">
+                        {% if friends %}
+                            {% for friend in friends %}
+                            <div class="friend-item">
+                                <div class="friend-avatar">
+                                    {{ friend.username|first|upper }}
+                                </div>
+                                <span class="friend-username">{{ friend.username }}</span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="no-friends">У вас пока нет друзей</p>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-        {% endif %}
-    </div>
-</div>
         </div>
     </main>
 
