@@ -3,9 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Главная</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>Главная</title>
 </head>
 <body>
     <header>
@@ -13,11 +13,37 @@
             <ul>
                 <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
                 <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
-                <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
+                {% if user.is_authenticated %}
+                    <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
+                    <li class="nav-right"><a href="{% url 'loginout' %}">Выйти</a></li>
+                {% else %}
+                    <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
+                    <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
+                {% endif %}
             </ul>
         </nav>
     </header>
-    {% block content %}
-    {% endblock %}
+    
+    <main>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}
+            <!-- Контент по умолчанию -->
+            <h1>Добро пожаловать в CoinCortex!</h1>
+            {% if user.is_authenticated %}
+                <p>Привет, {{ user.username }}!</p>
+            {% else %}
+                <p>Пожалуйста, войдите в систему или зарегистрируйтесь.</p>
+            {% endif %}
+        {% endblock %}
+    </main>
+    
+    <footer>
+        <p>CoinCortex 2025</p>
+    </footer>
 </body>
 </html>

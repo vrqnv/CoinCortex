@@ -7,15 +7,9 @@ from django.contrib import messages
 def index(request):
     return render(request, 'index.html')
 
-def chat(request):
-    return render(request, 'chat.html')
-
 @login_required
 def chat(request):
     return render(request, 'chat.html')
-
-def profile(request):
-    return render(request, 'profile.html')
 
 @login_required
 def profile(request):
@@ -26,9 +20,8 @@ def register(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)  # автоматический вход после регистрации
-            messages.success(request, 'Регистрация прошла успешно!')
-            return redirect('index')  # перенаправляем на главную
+            login(request, user)
+            return redirect('index')
         else:
             messages.error(request, 'Исправьте ошибки в форме')
     else:
@@ -48,11 +41,12 @@ def login_view(request):
             messages.error(request, 'Неверное имя пользователя или пароль')
     else:
         form = AuthenticationForm()
-    
     return render(request, 'registration/login.html', {'form': form})
 
 @login_required
 def logout_view(request):
-    logout(request)
-    messages.success(request, 'Вы успешно вышли из системы')
-    return redirect('index')
+    if request.method == 'POST':
+        logout(request)
+        messages.success(request, 'Вы успешно вышли из системы')
+        return redirect('login')  # Изменил на 'login' вместо 'index'
+    return render(request, 'registration/loginout.html')  # Создайте этот шаблон
