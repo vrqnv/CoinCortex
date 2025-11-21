@@ -31,3 +31,30 @@ def save_user_profile(sender, instance, **kwargs):
         instance.profile.save()
     except Profile.DoesNotExist:
         Profile.objects.create(user=instance)
+
+class Friendship(models.Model):
+    from_user = models.ForeignKey(User, related_name='friendship_requests_sent', on_delete=models.CASCADE)
+    to_user = models.ForeignKey(User, related_name='friendship_requests_received', on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+    accepted = models.BooleanField(default=False)
+    
+    class Meta:
+        unique_together = ('from_user', 'to_user')
+    
+    def __str__(self):
+        return f"{self.from_user} -> {self.to_user} ({'accepted' if self.accepted else 'pending'})"
+
+# Добавь этот метод в модель User для удобства
+def get_friends(self):
+    """Получить всех принятых друзей пользователя"""
+    sent = User.objects.filter(
+        friendship_requests_received__from_user=self,
+        friendship_requests_received__accepted=True
+    )
+    received = User.objects.filter(
+        friendship_requests_sent__to_user=self,
+        friendship_requests_sent__accepted=True
+    )
+    return sent.union(received)
+
+User.add_to_class('get_friends', get_friends)
