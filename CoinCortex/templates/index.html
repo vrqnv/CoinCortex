@@ -35,9 +35,7 @@
             <!-- Контент по умолчанию -->
             <h1>Добро пожаловать в CoinCortex!</h1>
             {% if user.is_authenticated %}
-                <p>Привет, {{ user.username }}!</p>
             {% else %}
-                <p>Пожалуйста, войдите в систему или зарегистрируйтесь.</p>
             {% endif %}
         {% endblock %}
     </main>

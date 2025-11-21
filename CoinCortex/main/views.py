@@ -35,7 +35,6 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            messages.success(request, f'Добро пожаловать, {user.username}!')
             return redirect('index')
         else:
             messages.error(request, 'Неверное имя пользователя или пароль')
@@ -47,6 +46,5 @@ def login_view(request):
 def logout_view(request):
     if request.method == 'POST':
         logout(request)
-        messages.success(request, 'Вы успешно вышли из системы')
         return redirect('login')  # Изменил на 'login' вместо 'index'
     return render(request, 'registration/loginout.html')  # Создайте этот шаблон
