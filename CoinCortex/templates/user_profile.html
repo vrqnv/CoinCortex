@@ -61,16 +61,21 @@
                                 {% if user.username != profile_user.username %}
                                     {% if is_friend %}
                                         <span class="friend-status">✅ Друг</span>
+                                        <form method="POST" action="{% url 'profile' %}" style="display: inline; margin-left: 10px;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="remove_friend" value="{{ profile_user.username }}">
+                                            <button type="submit" class="remove-friend-btn large">Удалить из друзей</button>
+                                        </form>
                                     {% elif friend_request_sent %}
                                         <span class="friend-status">⏳ Заявка отправлена</span>
                                     {% elif incoming_request %}
-                                        <form method="POST" action="{% url 'profile' %}" style="display: inline;">
+                                        <form method="POST" action="{% url 'profile' %}">
                                             {% csrf_token %}
                                             <input type="hidden" name="accept_friend" value="{{ incoming_request.id }}">
                                             <button type="submit" class="accept-friend-btn">Принять заявку</button>
                                         </form>
                                     {% else %}
-                                        <form method="POST" action="{% url 'profile' %}" style="display: inline;">
+                                        <form method="POST" action="{% url 'profile' %}">
                                             {% csrf_token %}
                                             <input type="hidden" name="add_friend" value="{{ profile_user.username }}">
                                             <button type="submit" class="add-friend-btn">Добавить в друзья</button>
@@ -78,6 +83,15 @@
                                     {% endif %}
                                 {% endif %}
                             </div>
+
+                            <!-- Кнопка написать сообщение -->
+                            {% if user.username != profile_user.username %}
+                            <div class="chat-action">
+                                <a href="/chat/start/{{ profile_user.username }}/" class="start-chat-btn">
+                                    💬 Написать сообщение
+                                </a>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

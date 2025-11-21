@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
-from .models import Post, User, Friendship
+from .models import Post, User, Friendship, Chat, Message
 
 def index(request):
     """Главная страница с лентой постов от сообществ"""
@@ -238,3 +238,64 @@ def user_profile(request, username):
     except User.DoesNotExist:
         messages.error(request, 'Пользователь не найден')
         return redirect('profile')
+    
+@login_required
+def chat(request):
+    """Страница со списком чатов"""
+    # Получаем все чаты пользователя
+    chats = Chat.objects.filter(participants=request.user).prefetch_related('participants', 'messages')
+    
+    return render(request, 'chat.html', {
+        'chats': chats
+    })
+
+@login_required
+def chat_detail(request, chat_id):
+    """Детальная страница чата"""
+    try:
+        chat = Chat.objects.get(id=chat_id, participants=request.user)
+        other_user = chat.get_other_participant(request.user)
+        
+        if request.method == 'POST':
+            text = request.POST.get('text', '').strip()
+            if text:
+                Message.objects.create(
+                    chat=chat,
+                    sender=request.user,
+                    text=text
+                )
+                # Обновляем время последнего изменения чата
+                chat.save()  # Это обновит поле updated
+                return redirect('chat_detail', chat_id=chat.id)
+        
+        # Получаем сообщения чата
+        messages = chat.messages.all()
+        
+        # Помечаем сообщения как прочитанные
+        chat.messages.filter(sender=other_user, read=False).update(read=True)
+        
+        return render(request, 'chat_detail.html', {
+            'chat': chat,
+            'other_user': other_user,
+            'messages': messages
+        })
+        
+    except Chat.DoesNotExist:
+        messages.error(request, 'Чат не найден')
+        return redirect('chat')
+
+@login_required
+def start_chat(request, username):
+    """Начать новый чат с пользователем"""
+    try:
+        other_user = User.objects.get(username=username)
+        if other_user == request.user:
+            messages.error(request, 'Нельзя начать чат с собой')
+            return redirect('chat')
+        
+        chat = request.user.get_or_create_chat(other_user)
+        return redirect('chat_detail', chat_id=chat.id)
+        
+    except User.DoesNotExist:
+        messages.error(request, 'Пользователь не найден')
+        return redirect('chat')

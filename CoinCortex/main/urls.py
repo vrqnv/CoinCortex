@@ -9,4 +9,6 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('loginout/', views.logout_view, name='loginout'),
     path('profile/<str:username>/', views.user_profile, name='user_profile'),
+    path('chat/<int:chat_id>/', views.chat_detail, name='chat_detail'),  # Детальная страница чата
+    path('chat/start/<str:username>/', views.start_chat, name='start_chat'),
 ]
