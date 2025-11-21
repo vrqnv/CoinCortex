@@ -10,8 +10,15 @@ class Post(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     wall_owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wall_posts')
     
+    class Meta:
+        ordering = ['-created']
+    
     def __str__(self):
-        return f'Post by {self.author} on {self.created}'
+        return f'Post by {self.author} at {self.created}'
+    
+    def can_delete(self, user):
+        """Проверяет, может ли пользователь удалить пост"""
+        return self.author == user
 
 class UserRating(models.Model):
     rated_user = models.ForeignKey(User, related_name='ratings_received', on_delete=models.CASCADE)
@@ -78,3 +85,49 @@ def get_friends(self):
     return sent.union(received)
 
 User.add_to_class('get_friends', get_friends)
+
+
+class Chat(models.Model):
+    """Модель чата между двумя пользователями"""
+    participants = models.ManyToManyField(User, related_name='chats')
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-updated']
+    
+    def __str__(self):
+        return f"Chat {self.id}"
+    
+    def get_other_participant(self, user):
+        """Получить второго участника чата"""
+        return self.participants.exclude(id=user.id).first()
+    
+    def get_last_message(self):
+        """Получить последнее сообщение в чате"""
+        return self.messages.order_by('-created').first()
+
+class Message(models.Model):
+    """Модель сообщения в чате"""
+    chat = models.ForeignKey(Chat, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    text = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    read = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['created']
+    
+    def __str__(self):
+        return f"Message from {self.sender} in chat {self.chat.id}"
+
+# Добавляем метод к User для удобства
+def get_or_create_chat(self, other_user):
+    """Получить или создать чат с другим пользователем"""
+    chat = Chat.objects.filter(participants=self).filter(participants=other_user).first()
+    if not chat:
+        chat = Chat.objects.create()
+        chat.participants.add(self, other_user)
+    return chat
+
+User.add_to_class('get_or_create_chat', get_or_create_chat)

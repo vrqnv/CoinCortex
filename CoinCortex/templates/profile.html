@@ -31,6 +31,17 @@
     </header>
 
     <main>
+        <!-- Сообщения -->
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <div class="profile-layout">
             <!-- Левая колонка - профиль и посты -->
             <div class="profile-main">
@@ -158,6 +169,22 @@
                 </div>
                 {% endif %}
 
+                <!-- Исходящие заявки -->
+                {% if outgoing_requests %}
+                <div class="requests-section">
+                    <h3>Отправленные заявки</h3>
+                    {% for request in outgoing_requests %}
+                    <div class="request-item">
+                        <div class="request-avatar">
+                            {{ request.to_user.username|first|upper }}
+                        </div>
+                        <span class="request-username">{{ request.to_user.username }}</span>
+                        <span class="request-status">⏳ Ожидание</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
                 <!-- Список друзей -->
                 <div class="friends-section">
                     <h3>Мои друзья</h3>
@@ -204,6 +231,24 @@
                                         </button>
                                     </form>
                                 </div>
+<<<<<<< HEAD
+=======
+                                <a href="{% url 'user_profile' username=friend.username %}" class="friend-username">
+                                    {{ friend.username }}
+                                </a>
+                                <div class="friend-actions">
+                                    <a href="/chat/start/{{ friend.username }}/" class="chat-btn" title="Написать сообщение">
+                                        💬
+                                    </a>
+                                    <form method="POST" class="remove-friend-form">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="remove_friend" value="{{ friend.username }}">
+                                        <button type="submit" class="remove-friend-btn" title="Удалить из друзей">
+                                            ✕
+                                        </button>
+                                    </form>
+                                </div>
+>>>>>>> ed9b647160f62b6e356802c3326207b5ac1cdfba
                             </div>
                             {% endfor %}
                         {% else %}

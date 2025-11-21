@@ -1,4 +1,4 @@
-<!-- templates/main/index.html -->
+<!-- templates/chat.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% load static %}
     <link rel="stylesheet" href="{% static 'style.css' %}">
-    <title>Главная</title>
+    <title>Чаты</title>
 </head>
 <body>
     <header>
@@ -16,7 +16,12 @@
                 <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
                 {% if user.is_authenticated %}
                     <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
-                    <li class="nav-right"><a href="{% url 'loginout' %}">Выйти</a></li>
+                    <li class="nav-right">
+                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">Выйти</button>
+                        </form>
+                    </li>
                 {% else %}
                     <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
                     <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
@@ -24,9 +29,56 @@
             </ul>
         </nav>
     </header>
+
     <main>
-        <h1>Чат</h1>
+        <div class="chat-container">
+            <div class="chat-header">
+                <h1>Мои чаты</h1>
+                <p>Общайтесь с друзьями</p>
+            </div>
+
+            <div class="chats-list">
+                {% if chats %}
+                    {% for chat in chats %}
+                    <a href="{% url 'chat_detail' chat.id %}" class="chat-item">
+                        <div class="chat-avatar">
+                            {{ chat.get_other_participant.user.username|first|upper }}
+                        </div>
+                        <div class="chat-info">
+                            <div class="chat-user">{{ chat.get_other_participant.user.username }}</div>
+                            <div class="chat-last-message">
+                                {% with last_message=chat.get_last_message %}
+                                    {% if last_message %}
+                                        {% if last_message.sender == user %}
+                                            <strong>Вы:</strong> 
+                                        {% endif %}
+                                        {{ last_message.text|truncatechars:50 }}
+                                    {% else %}
+                                        Нет сообщений
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                        <div class="chat-meta">
+                            {% with last_message=chat.get_last_message %}
+                                {% if last_message %}
+                                    <div class="chat-time">{{ last_message.created|date:"H:i" }}</div>
+                                {% endif %}
+                            {% endwith %}
+                            <!-- Временно уберем бейдж непрочитанных -->
+                        </div>
+                    </a>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-chats">
+                        <p>У вас пока нет чатов</p>
+                        <p>Найдите друзей и начните общение!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
     </main>
+
     <footer>
         <p>CoinCortex 2025</p>
     </footer>
