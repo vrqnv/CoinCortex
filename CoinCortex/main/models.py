@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Avg
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save
@@ -12,6 +13,19 @@ class Post(models.Model):
     def __str__(self):
         return f'Post by {self.author} on {self.created}'
 
+class UserRating(models.Model):
+    rated_user = models.ForeignKey(User, related_name='ratings_received', on_delete=models.CASCADE)
+    rater = models.ForeignKey(User, related_name='ratings_given', on_delete=models.CASCADE)
+    rating = models.IntegerField(choices=[(i, i) for i in range(1, 11)])  # 1-10 баллов
+    comment = models.TextField(blank=True, max_length=200)
+    created = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('rated_user', 'rater')  # Один друг = одна оценка
+    
+    def __str__(self):
+        return f"{self.rater} -> {self.rated_user}: {self.rating}⭐"
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
@@ -19,6 +33,12 @@ class Profile(models.Model):
 
     def __str__(self):
         return f'Profile of {self.user.username}'
+    
+    def get_average_rating(self):
+        ratings = UserRating.objects.filter(rated_user=self.user)
+        if ratings.exists():
+            return round(ratings.aggregate(Avg('rating'))['rating__avg'], 1)
+        return 0
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):

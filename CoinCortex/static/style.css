@@ -1018,15 +1018,23 @@ footer {
 
 .friend-item {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 0.75rem;
-    padding: 0.75rem;
+    padding: 1rem;
     border-radius: 8px;
-    transition: background 0.3s ease;
+    background: white;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
 }
 
 .friend-item:hover {
-    background: #f9fafb;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.friend-item > div:first-child {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 .friend-avatar {
@@ -1052,6 +1060,100 @@ footer {
     text-align: center;
     padding: 1rem;
     font-style: italic;
+}
+
+/* Стили для формы оценки */
+.rating-form-container {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.current-rating {
+    background: #f0f9ff;
+    padding: 0.5rem;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.current-rating strong {
+    color: #7C3AED;
+    font-size: 1.1rem;
+}
+
+.rating-comment {
+    color: #6b7280;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    font-style: italic;
+}
+
+.rate-friend-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.rating-input-group,
+.comment-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.rating-input-group label,
+.comment-input-group label {
+    font-size: 0.85rem;
+    color: #374151;
+    font-weight: 500;
+}
+
+.rating-select {
+    padding: 0.5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.rating-select:focus {
+    outline: none;
+    border-color: #7C3AED;
+}
+
+.rating-comment-input {
+    padding: 0.5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.3s ease;
+}
+
+.rating-comment-input:focus {
+    outline: none;
+    border-color: #7C3AED;
+}
+
+.rate-btn {
+    background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.rate-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
 }
 
 /* Адаптивность */

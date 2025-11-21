@@ -44,7 +44,8 @@
                         <div class="user-details">
                             <h1>{{ user.username }}</h1>
                             <p class="join-date">Зарегистрирован: {{ user.date_joined|date:"d.m.Y" }}</p>
-                            <p class="friends-count">Друзей: {{ friends.count }}</p>
+                            <p class="friends-count">Друзей: {{ friends|length }}</p>
+                            <p class="rating">Рейтинг: {{ user.profile.get_average_rating }}⭐ ({{ user.ratings_received.count }} оценок)</p>
                         </div>
                     </div>
 
@@ -162,12 +163,47 @@
                     <h3>Мои друзья</h3>
                     <div class="friends-list">
                         {% if friends %}
-                            {% for friend in friends %}
+                            {% for friend_data in friends %}
                             <div class="friend-item">
                                 <div class="friend-avatar">
-                                    {{ friend.username|first|upper }}
+                                    {{ friend_data.user.username|first|upper }}
                                 </div>
-                                <span class="friend-username">{{ friend.username }}</span>
+                                <span class="friend-username">{{ friend_data.user.username }}</span>
+                                
+                                <!-- Форма оценки друга -->
+                                <div class="rating-form-container">
+                                    {% if friend_data.rating %}
+                                        <div class="current-rating">
+                                            <span>Ваша оценка: <strong>{{ friend_data.rating.rating }}/10</strong></span>
+                                            {% if friend_data.rating.comment %}
+                                                <p class="rating-comment">{{ friend_data.rating.comment }}</p>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <form method="POST" class="rate-friend-form">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="rate_friend" value="{{ friend_data.user.username }}">
+                                        <div class="rating-input-group">
+                                            <label>Оценка (1-10):</label>
+                                            <select name="rating" class="rating-select" required>
+                                                <option value="">Выберите</option>
+                                                {% for i in "1234567890"|make_list %}
+                                                    <option value="{{ forloop.counter }}" {% if friend_data.rating and friend_data.rating.rating == forloop.counter %}selected{% endif %}>
+                                                        {{ forloop.counter }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="comment-input-group">
+                                            <label>Комментарий (необязательно):</label>
+                                            <textarea name="comment" class="rating-comment-input" placeholder="Ваш комментарий..." maxlength="200" rows="2">{% if friend_data.rating %}{{ friend_data.rating.comment }}{% endif %}</textarea>
+                                        </div>
+                                        <button type="submit" class="rate-btn">
+                                            {% if friend_data.rating %}Изменить оценку{% else %}Оценить{% endif %}
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                             {% endfor %}
                         {% else %}

@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
+from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Post, User, Friendship
+from .models import Post, Friendship, UserRating
 
 def index(request):
     """Главная страница с лентой постов от сообществ"""
@@ -72,12 +73,71 @@ def profile(request):
             except Friendship.DoesNotExist:
                 pass
             return redirect('profile')
+        
+        # Оценка друга
+        elif 'rate_friend' in request.POST:
+            friend_username = request.POST.get('rate_friend')
+            rating_value = request.POST.get('rating')
+            comment_text = request.POST.get('comment', '').strip()
+            
+            try:
+                friend_user = User.objects.get(username=friend_username)
+                # Проверяем, что это действительно друг
+                is_friend = (
+                    Friendship.objects.filter(
+                        from_user=request.user,
+                        to_user=friend_user,
+                        accepted=True
+                    ).exists() or
+                    Friendship.objects.filter(
+                        from_user=friend_user,
+                        to_user=request.user,
+                        accepted=True
+                    ).exists()
+                )
+                
+                if is_friend and friend_user != request.user:
+                    rating_value = int(rating_value)
+                    if 1 <= rating_value <= 10:
+                        UserRating.objects.update_or_create(
+                            rated_user=friend_user,
+                            rater=request.user,
+                            defaults={
+                                'rating': rating_value,
+                                'comment': comment_text
+                            }
+                        )
+                        messages.success(request, f'Оценка {rating_value}/10 поставлена!')
+                    else:
+                        messages.error(request, 'Оценка должна быть от 1 до 10')
+                else:
+                    messages.error(request, 'Можно оценивать только своих друзей')
+            except (User.DoesNotExist, ValueError):
+                messages.error(request, 'Ошибка при постановке оценки')
+            return redirect('profile')
     
     # Получаем последние посты текущего пользователя
     user_posts = Post.objects.filter(author=request.user).order_by('-created')[:10]
     
     # Получаем друзей пользователя
-    friends = request.user.get_friends()
+    friends_list = list(request.user.get_friends())
+    
+    # Получаем оценки, которые поставил текущий пользователь своим друзьям
+    ratings_dict = {}
+    for rating in UserRating.objects.filter(rater=request.user):
+        ratings_dict[rating.rated_user.id] = {
+            'rating': rating.rating,
+            'comment': rating.comment
+        }
+    
+    # Добавляем информацию об оценках к каждому другу
+    friends_with_ratings = []
+    for friend in friends_list:
+        friend_data = {
+            'user': friend,
+            'rating': ratings_dict.get(friend.id, None)
+        }
+        friends_with_ratings.append(friend_data)
     
     # Получаем входящие заявки в друзья
     incoming_requests = Friendship.objects.filter(
@@ -86,17 +146,17 @@ def profile(request):
     )
     
     # Поиск пользователей (если есть поисковый запрос)
-    search_query = request.GET.get('search', '')
+    search_query = request.GET.get('search', '').strip()
     search_results = []
     if search_query:
         search_results = User.objects.filter(
             username__icontains=search_query
-        ).exclude(id=request.user.id)[:10]
+        ).exclude(id=request.user.id).distinct()[:10]
     
     return render(request, 'profile.html', {
         'user': request.user,
         'posts': user_posts,
-        'friends': friends,
+        'friends': friends_with_ratings,
         'incoming_requests': incoming_requests,
         'search_results': search_results,
         'search_query': search_query
