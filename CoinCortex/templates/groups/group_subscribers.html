@@ -1,0 +1,90 @@
+<!-- templates/groups/group_subscribers.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>Подписчики - {{ group.name }}</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
+                <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
+                <li class="nav-left"><a href="{% url 'groups_list' %}">Сообщества</a></li>
+                {% if user.is_authenticated %}
+                    <li class="nav-right"><a href="{% url 'notifications' %}">Уведомления</a></li>
+                    <li class="nav-right"><a href="{% url 'friends' %}">Друзья</a></li>
+                    <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
+                    <li class="nav-right">
+                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">Выйти</button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
+                    <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="feed-container">
+            <div class="feed-header">
+                <h1>Подписчики сообщества "{{ group.name }}"</h1>
+                <p>Всего подписчиков: {{ subscribers.paginator.count }}</p>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <a href="{% url 'group_detail' group_id=group.id %}" class="btn-secondary">← Вернуться к сообществу</a>
+            </div>
+
+            <div class="posts-section">
+                {% if subscribers %}
+                    <div class="friends-list">
+                        {% for subscriber in subscribers %}
+                        <div class="friend-item">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div class="friend-avatar" style="{% if subscriber.profile.avatar %}background-image: url('{{ subscriber.profile.avatar.url }}'); background-size: cover;{% endif %}">
+                                    {% if not subscriber.profile.avatar %}{{ subscriber.username|first|upper }}{% endif %}
+                                </div>
+                                <a href="{% url 'user_profile' username=subscriber.username %}" class="friend-username">
+                                    {{ subscriber.username }}
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Пагинация -->
+                    {% if subscribers.has_other_pages %}
+                    <div style="text-align: center; margin-top: 2rem;">
+                        {% if subscribers.has_previous %}
+                            <a href="?page={{ subscribers.previous_page_number }}" class="btn-secondary">← Назад</a>
+                        {% endif %}
+                        <span style="margin: 0 1rem; color: #6b7280;">Страница {{ subscribers.number }} из {{ subscribers.paginator.num_pages }}</span>
+                        {% if subscribers.has_next %}
+                            <a href="?page={{ subscribers.next_page_number }}" class="btn-secondary">Вперед →</a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="no-posts">
+                        <p>У сообщества пока нет подписчиков</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>CoinCortex 2025</p>
+    </footer>
+</body>
+</html>
+

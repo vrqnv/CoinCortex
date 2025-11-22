@@ -1,0 +1,155 @@
+<!-- templates/groups/groups_list.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>Группы</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
+                <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
+                <li class="nav-left"><a href="{% url 'groups_list' %}">Сообщества</a></li>
+                {% if user.is_authenticated %}
+                    <li class="nav-right"><a href="{% url 'notifications' %}">Уведомления</a></li>
+                    <li class="nav-right"><a href="{% url 'friends' %}">Друзья</a></li>
+                    <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
+                    <li class="nav-right">
+                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">Выйти</button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
+                    <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="feed-container">
+            <div class="feed-header">
+                <h1>Сообщества</h1>
+                <p>Найдите интересные сообщества или создайте свое</p>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <a href="{% url 'group_create' %}" class="btn-primary" style="margin-right: 1rem;">Создать сообщество</a>
+                <a href="{% url 'my_groups' %}" class="btn-secondary">Мои сообщества</a>
+            </div>
+
+            <!-- Поиск и фильтры -->
+            <div class="search-section" style="max-width: 800px; margin: 0 auto 2rem;">
+                <form method="GET" id="search-form">
+                    <div class="search-form" style="margin-bottom: 1rem;">
+                        <input type="text" name="search" value="{{ search_query }}" placeholder="Поиск сообществ..." class="search-input">
+                        <button type="submit" class="search-btn">🔍</button>
+                    </div>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                        <select name="theme" onchange="document.getElementById('search-form').submit()" style="padding: 0.5rem; border: 2px solid #e5e7eb; border-radius: 8px;">
+                            <option value="">Все тематики</option>
+                            {% for theme_code, theme_name in themes %}
+                                <option value="{{ theme_code }}" {% if theme_filter == theme_code %}selected{% endif %}>{{ theme_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <select name="sort" onchange="document.getElementById('search-form').submit()" style="padding: 0.5rem; border: 2px solid #e5e7eb; border-radius: 8px;">
+                            <option value="created" {% if sort_by == 'created' %}selected{% endif %}>По дате создания</option>
+                            <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>По рейтингу</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Список групп -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                {% for group in groups %}
+                <div class="post-card">
+                    <div class="post-header">
+                        <div class="post-author">
+                            <div class="post-avatar" style="{% if group.avatar %}background-image: url('{{ group.avatar.url }}'); background-size: cover;{% endif %}">
+                                {% if not group.avatar %}{{ group.name|first|upper }}{% endif %}
+                            </div>
+                            <div class="author-info">
+                                <strong><a href="{% url 'group_detail' group_id=group.id %}" style="color: #1f2937; text-decoration: none;">{{ group.name }}</a></strong>
+                                <span class="post-community">{{ group.get_theme_display }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="post-content">
+                        {% if group.description %}
+                            {{ group.description|truncatewords:20 }}
+                        {% else %}
+                            <em style="color: #6b7280;">Нет описания</em>
+                        {% endif %}
+                    </div>
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; font-size: 0.9rem; color: #6b7280;">
+                        <span>👥 {{ group.subscribers_count }} подписчиков</span>
+                        <span>⭐ Рейтинг: 
+                            {% if group.total_rating > 0 %}
+                                <span style="color: #059669;">+{{ group.total_rating }}</span>
+                            {% elif group.total_rating < 0 %}
+                                <span style="color: #ef4444;">{{ group.total_rating }}</span>
+                            {% else %}
+                                <span>0</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div style="margin-top: 0.5rem;">
+                        {% if group.user_is_subscribed %}
+                            <span style="color: #059669; font-size: 0.85rem;">✓ Вы подписаны</span>
+                        {% endif %}
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <a href="{% url 'group_detail' group_id=group.id %}" class="btn-primary" style="display: block; text-align: center; padding: 0.5rem;">Открыть сообщество</a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="no-posts" style="grid-column: 1 / -1;">
+                    <p>Сообщества не найдены</p>
+                    {% if search_query %}
+                        <p>Попробуйте изменить поисковый запрос</p>
+                    {% else %}
+                        <p><a href="{% url 'group_create' %}" class="btn-primary">Создайте первое сообщество</a></p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Пагинация -->
+            {% if groups.has_other_pages %}
+            <div style="text-align: center; margin-top: 2rem;">
+                {% if groups.has_previous %}
+                    <a href="?page={{ groups.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn-secondary">← Назад</a>
+                {% endif %}
+                <span style="margin: 0 1rem; color: white;">Страница {{ groups.number }} из {{ groups.paginator.num_pages }}</span>
+                {% if groups.has_next %}
+                    <a href="?page={{ groups.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn-secondary">Вперед →</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <footer>
+        <p>CoinCortex 2025</p>
+    </footer>
+</body>
+</html>
+

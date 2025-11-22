@@ -14,7 +14,10 @@
             <ul>
                 <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
                 <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
+                <li class="nav-left"><a href="{% url 'groups_list' %}">Сообщества</a></li>
                 {% if user.is_authenticated %}
+                    <li class="nav-right"><a href="{% url 'notifications' %}">Уведомления{% if unread_notifications %}<span style="background: #ef4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.8rem; margin-left: 5px;">{{ unread_notifications }}</span>{% endif %}</a></li>
+                    <li class="nav-right"><a href="{% url 'chat' %}">Чаты{% if total_unread %}<span style="background: #ef4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.8rem; margin-left: 5px;">{{ total_unread }}</span>{% endif %}</a></li>
                     <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
                     <li class="nav-right">
                         <form method="post" action="{% url 'loginout' %}" style="display: inline;">
@@ -48,39 +51,95 @@
         <!-- Лента постов для авторизованных пользователей -->
         <div class="feed-container">
             <div class="feed-header">
-                <h1>Лента новостей</h1>
-                <p>Последние посты от сообществ</p>
+                <h1>{% if show_popular %}Популярные посты{% else %}Лента новостей{% endif %}</h1>
+                <p>{% if show_popular %}Самые популярные посты от пользователей и сообществ{% else %}Последние посты от сообществ и друзей{% endif %}</p>
             </div>
 
             <div class="posts-feed">
-                {% if community_posts %}
-                    {% for post in community_posts %}
+                {% if all_posts %}
+                    {% for item in all_posts %}
                     <div class="post-card">
                         <div class="post-header">
                             <div class="post-author">
-                                <div class="post-avatar">
-                                    {{ post.author.username|first|upper }}
-                                </div>
-                                <div class="author-info">
-                                    <strong>{{ post.author.username }}</strong>
-                                    <span class="post-community">Сообщество</span>
-                                </div>
+                                {% if item.type == 'group' %}
+                                    <!-- Пост от сообщества - показываем аватарку и название группы -->
+                                    <div class="post-avatar" style="{% if item.post.group.avatar %}background-image: url('{{ item.post.group.avatar.url }}'); background-size: cover;{% endif %}">
+                                        {% if not item.post.group.avatar %}{{ item.post.group.name|first|upper }}{% endif %}
+                                    </div>
+                                    <div class="author-info">
+                                        <strong>
+                                            <a href="{% url 'group_detail' group_id=item.post.group.id %}" style="color: #1f2937; text-decoration: none;">
+                                                {{ item.post.group.name }}
+                                            </a>
+                                        </strong>
+                                        <span class="post-community">Сообщество</span>
+                                    </div>
+                                {% else %}
+                                    <!-- Пост от пользователя -->
+                                    <div class="post-avatar" style="{% if item.post.author.profile.avatar %}background-image: url('{{ item.post.author.profile.avatar.url }}'); background-size: cover;{% endif %}">
+                                        {% if not item.post.author.profile.avatar %}{{ item.post.author.username|first|upper }}{% endif %}
+                                    </div>
+                                    <div class="author-info">
+                                        <strong>{{ item.post.author.username }}</strong>
+                                        <span class="post-community">Пользователь</span>
+                                    </div>
+                                {% endif %}
                             </div>
-                            <span class="post-date">{{ post.created|date:"d.m.Y H:i" }}</span>
+                            <span class="post-date">{{ item.post.created|date:"d.m.Y H:i" }}</span>
                         </div>
                         <div class="post-content">
-                            {{ post.content|linebreaksbr }}
+                            {{ item.post.content|linebreaksbr }}
+                            {% if item.post.image %}
+                                <div style="margin-top: 1rem;">
+                                    <img src="{{ item.post.image.url }}" alt="Изображение" style="max-width: 100%; border-radius: 8px;">
+                                </div>
+                            {% endif %}
                         </div>
                         <div class="post-actions">
-                            <button class="like-btn">❤️</button>
-                            <button class="comment-btn">💬</button>
-                            <button class="share-btn">↗️</button>
+                            {% if user.is_authenticated %}
+                            <form method="POST" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="like_post" value="{% if item.type == 'group' %}group_{{ item.post.id }}{% else %}{{ item.post.id }}{% endif %}">
+                                <button type="submit" class="like-btn" style="{% if item.is_liked %}color: #ef4444;{% endif %}">
+                                    ❤️ {{ item.likes_count }}
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="like-btn">❤️ {{ item.likes_count }}</span>
+                            {% endif %}
+                            <span class="comment-btn">💬 {{ item.comments_count }}</span>
+                            {% if item.comments_count > 0 %}
+                                <div class="comments-section" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f3f4f6;">
+                                    <h4 style="font-size: 0.9rem; color: #6b7280; margin-bottom: 0.5rem;">Комментарии:</h4>
+                                    {% for comment in item.comments|slice:":3" %}
+                                    <div style="padding: 0.5rem; background: #f9fafb; border-radius: 8px; margin-bottom: 0.5rem;">
+                                        <strong style="font-size: 0.85rem;">{{ comment.author.username }}:</strong>
+                                        <span style="font-size: 0.85rem;">{{ comment.content }}</span>
+                                    </div>
+                                    {% endfor %}
+                                    {% if user.is_authenticated %}
+                                    <form method="POST" style="margin-top: 0.5rem;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="comment_post" value="{% if item.type == 'group' %}group_{{ item.post.id }}{% else %}{{ item.post.id }}{% endif %}">
+                                        <input type="text" name="comment_text" placeholder="Написать комментарий..." style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem;">
+                                        <button type="submit" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #7C3AED; color: white; border: none; border-radius: 8px; cursor: pointer;">Отправить</button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            {% elif user.is_authenticated %}
+                                <form method="POST" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f3f4f6;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="comment_post" value="{% if item.type == 'group' %}group_{{ item.post.id }}{% else %}{{ item.post.id }}{% endif %}">
+                                    <input type="text" name="comment_text" placeholder="Написать комментарий..." style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem;">
+                                    <button type="submit" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #7C3AED; color: white; border: none; border-radius: 8px; cursor: pointer;">Отправить</button>
+                                </form>
+                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}
                 {% else %}
                     <div class="no-posts">
-                        <p>Пока нет постов от сообществ</p>
+                        <p>Пока нет постов</p>
                         <p>Будьте первым, кто поделится новостью!</p>
                     </div>
                 {% endif %}

@@ -1,0 +1,80 @@
+<!-- templates/registration/delete_account.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>Удаление аккаунта</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
+                <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
+                <li class="nav-left"><a href="{% url 'groups_list' %}">Сообщества</a></li>
+                {% if user.is_authenticated %}
+                    <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
+                    <li class="nav-right">
+                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">Выйти</button>
+                        </form>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="auth-container">
+            <div class="auth-card" style="max-width: 500px;">
+                <div class="card-header" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                    <h2>⚠️ Удаление аккаунта</h2>
+                </div>
+                <div class="card-body">
+                    <p style="color: #ef4444; font-weight: 600; margin-bottom: 1rem;">Внимание! Это действие необратимо.</p>
+                    <p style="margin-bottom: 1.5rem;">При удалении аккаунта будут удалены:</p>
+                    <ul style="margin-bottom: 1.5rem; padding-left: 1.5rem;">
+                        <li>Все ваши посты</li>
+                        <li>Все ваши сообщества</li>
+                        <li>Все связи с друзьями</li>
+                        <li>Все сообщения в чатах</li>
+                        <li>Вся информация о профиле</li>
+                    </ul>
+                    <form method="POST" class="auth-form">
+                        {% csrf_token %}
+                        <div style="margin-bottom: 1rem;">
+                            <label class="form-label">Для подтверждения введите: <strong>DELETE</strong></label>
+                            <input type="text" name="confirm" class="form-control" placeholder="DELETE" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">Удалить аккаунт</button>
+                        </div>
+                    </form>
+                    <div class="auth-links">
+                        <a href="{% url 'profile' %}">← Отмена</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>CoinCortex 2025</p>
+    </footer>
+</body>
+</html>
+

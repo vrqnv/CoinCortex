@@ -14,7 +14,10 @@
             <ul>
                 <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
                 <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
+                <li class="nav-left"><a href="{% url 'groups_list' %}">Сообщества</a></li>
                 {% if user.is_authenticated %}
+                    <li class="nav-right"><a href="{% url 'notifications' %}">Уведомления</a></li>
+                    <li class="nav-right"><a href="{% url 'friends' %}">Друзья</a></li>
                     <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
                     <li class="nav-right">
                         <form method="post" action="{% url 'loginout' %}" style="display: inline;">
@@ -47,25 +50,37 @@
             <div class="profile-main">
                 <div class="profile-card">
                     <div class="user-info">
-                        <div class="avatar">
-                            <div class="default-avatar">
-                                {{ user.username|first|upper }}
-                            </div>
+                        <div class="avatar" style="{% if user.profile.avatar %}background-image: url('{{ user.profile.avatar.url }}'); background-size: cover;{% endif %}">
+                            {% if not user.profile.avatar %}
+                                <div class="default-avatar">
+                                    {{ user.username|first|upper }}
+                                </div>
+                            {% endif %}
                         </div>
                         <div class="user-details">
-                            <h1>{{ user.username }}</h1>
-                            <p class="join-date">Зарегистрирован: {{ user.date_joined|date:"d.m.Y" }}</p>
+                            <h1>{{ user.profile.get_full_name }}</h1>
+                            <p style="color: #6b7280; font-size: 0.9rem;">@{{ user.username }}</p>
+                            {% if user.profile.bio %}
+                                <p style="color: #374151; margin-top: 0.5rem;">{{ user.profile.bio }}</p>
+                            {% endif %}
+                            {% if user.profile.birth_date %}
+                                <p style="color: #6b7280; font-size: 0.9rem; margin-top: 0.5rem;">Дата рождения: {{ user.profile.birth_date|date:"d.m.Y" }}</p>
+                            {% endif %}
                             <p class="friends-count">Друзей: {{ friends|length }}</p>
-                            <p class="rating">Рейтинг: {{ user.profile.get_average_rating }}⭐ ({{ user.ratings_received.count }} оценок)</p>
+                            <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                                <a href="{% url 'edit_profile' %}" class="btn-primary" style="padding: 0.5rem 1rem; text-decoration: none;">Редактировать профиль</a>
+                                <a href="{% url 'delete_account' %}" class="btn-secondary" style="padding: 0.5rem 1rem; text-decoration: none; background: #ef4444; color: white;">Удалить аккаунт</a>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Форма для создания поста -->
                     <div class="post-form-section">
                         <h2>Что у вас нового?</h2>
-                        <form method="POST">
+                        <form method="POST" enctype="multipart/form-data">
                             {% csrf_token %}
                             <textarea name="content" placeholder="Поделитесь своими мыслями..." required></textarea>
+                            <input type="file" name="image" accept="image/*" style="margin-bottom: 1rem; padding: 0.5rem;">
                             <button type="submit" class="publish-btn">Опубликовать</button>
                         </form>
                     </div>
@@ -76,20 +91,20 @@
                     <h2>Мои последние посты</h2>
                     <div class="posts-list">
                         {% if posts %}
-                            {% for post in posts %}
+                            {% for item in posts %}
                             <div class="post-card">
                                 <div class="post-header">
                                     <div class="post-author">
-                                        <div class="post-avatar">
-                                            {{ post.author.username|first|upper }}
+                                        <div class="post-avatar" style="{% if item.post.author.profile.avatar %}background-image: url('{{ item.post.author.profile.avatar.url }}'); background-size: cover;{% endif %}">
+                                            {% if not item.post.author.profile.avatar %}{{ item.post.author.username|first|upper }}{% endif %}
                                         </div>
-                                        <strong>{{ post.author.username }}</strong>
+                                        <strong>{{ item.post.author.username }}</strong>
                                     </div>
                                     <div class="post-actions">
-                                        <span class="post-date">{{ post.created|date:"d.m.Y H:i" }}</span>
+                                        <span class="post-date">{{ item.post.created|date:"d.m.Y H:i" }}</span>
                                         <form method="POST" class="delete-form">
                                             {% csrf_token %}
-                                            <input type="hidden" name="delete_post" value="{{ post.id }}">
+                                            <input type="hidden" name="delete_post" value="{{ item.post.id }}">
                                             <button type="submit" class="delete-btn" title="Удалить пост">
                                                 🗑️
                                             </button>
@@ -97,7 +112,15 @@
                                     </div>
                                 </div>
                                 <div class="post-content">
-                                    {{ post.content|linebreaksbr }}
+                                    {{ item.post.content|linebreaksbr }}
+                                    {% if item.post.image %}
+                                        <div style="margin-top: 1rem;">
+                                            <img src="{{ item.post.image.url }}" alt="Изображение" style="max-width: 100%; border-radius: 8px;">
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="post-actions" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f3f4f6;">
+                                    <span style="color: #6b7280;">❤️ {{ item.likes_count }} 💬 {{ item.comments_count }}</span>
                                 </div>
                             </div>
                             {% endfor %}
@@ -185,71 +208,36 @@
                 </div>
                 {% endif %}
 
-                <!-- Список друзей -->
+                <!-- Список друзей (краткий) -->
                 <div class="friends-section">
                     <h3>Мои друзья</h3>
                     <div class="friends-list">
                         {% if friends %}
-                            {% for friend_data in friends %}
+                            {% for friend in friends %}
                             <div class="friend-item">
-                                <div class="friend-avatar">
-                                    {{ friend_data.user.username|first|upper }}
-                                </div>
-                                <span class="friend-username">{{ friend_data.user.username }}</span>
-                                
-                                <!-- Форма оценки друга -->
-                                <div class="rating-form-container">
-                                    {% if friend_data.rating %}
-                                        <div class="current-rating">
-                                            <span>Ваша оценка: <strong>{{ friend_data.rating.rating }}/10</strong></span>
-                                            {% if friend_data.rating.comment %}
-                                                <p class="rating-comment">{{ friend_data.rating.comment }}</p>
-                                            {% endif %}
-                                        </div>
-                                    {% endif %}
-                                    
-                                    <form method="POST" class="rate-friend-form">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="rate_friend" value="{{ friend_data.user.username }}">
-                                        <div class="rating-input-group">
-                                            <label>Оценка (1-10):</label>
-                                            <select name="rating" class="rating-select" required>
-                                                <option value="">Выберите</option>
-                                                {% for i in "1234567890"|make_list %}
-                                                    <option value="{{ forloop.counter }}" {% if friend_data.rating and friend_data.rating.rating == forloop.counter %}selected{% endif %}>
-                                                        {{ forloop.counter }}
-                                                    </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-                                        <div class="comment-input-group">
-                                            <label>Комментарий (необязательно):</label>
-                                            <textarea name="comment" class="rating-comment-input" placeholder="Ваш комментарий..." maxlength="200" rows="2">{% if friend_data.rating %}{{ friend_data.rating.comment }}{% endif %}</textarea>
-                                        </div>
-                                        <button type="submit" class="rate-btn">
-                                            {% if friend_data.rating %}Изменить оценку{% else %}Оценить{% endif %}
-                                        </button>
-                                    </form>
-                                </div>
-                                <a href="{% url 'user_profile' username=friend_data.user.username %}" class="friend-username">
-                                    {{ friend_data.user.username }}
-                                </a>
-                                <div class="friend-actions">
-                                    <a href="/chat/start/{{ friend_data.user.username }}/" class="chat-btn" title="Написать сообщение">
-                                        💬
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <div class="friend-avatar" style="{% if friend.profile.avatar %}background-image: url('{{ friend.profile.avatar.url }}'); background-size: cover;{% endif %}">
+                                        {% if not friend.profile.avatar %}{{ friend.username|first|upper }}{% endif %}
+                                    </div>
+                                    <a href="{% url 'user_profile' username=friend.username %}" class="friend-username">
+                                        {{ friend.username }}
                                     </a>
-                                    <form method="POST" class="remove-friend-form">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="remove_friend" value="{{ friend.username }}">
-                                        <button type="submit" class="remove-friend-btn" title="Удалить из друзей">
-                                            ✕
-                                        </button>
-                                    </form>
+                                </div>
+                                <div class="friend-actions" style="margin-top: 0.5rem;">
+                                    <a href="/chat/start/{{ friend.username }}/" class="chat-btn" title="Написать сообщение" style="text-decoration: none; padding: 0.25rem 0.5rem; background: #7C3AED; color: white; border-radius: 4px;">
+                                        💬 Написать
+                                    </a>
                                 </div>
                             </div>
                             {% endfor %}
+                            <div style="margin-top: 1rem; text-align: center;">
+                                <a href="{% url 'friends' %}" class="btn-primary" style="padding: 0.5rem 1rem; text-decoration: none;">Все друзья →</a>
+                            </div>
                         {% else %}
                             <p class="no-friends">У вас пока нет друзей</p>
+                            <div style="margin-top: 1rem; text-align: center;">
+                                <a href="{% url 'friends' %}" class="btn-primary" style="padding: 0.5rem 1rem; text-decoration: none;">Найти друзей</a>
+                            </div>
                         {% endif %}
                     </div>
                 </div>

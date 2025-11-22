@@ -1,0 +1,92 @@
+<!-- templates/registration/edit_profile.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>Редактирование профиля</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
+                <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
+                <li class="nav-left"><a href="{% url 'groups_list' %}">Сообщества</a></li>
+                {% if user.is_authenticated %}
+                    <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
+                    <li class="nav-right">
+                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">Выйти</button>
+                        </form>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="card-header">
+                    <h2>Редактирование профиля</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data" class="auth-form">
+                        {% csrf_token %}
+                        <div style="margin-bottom: 1rem;">
+                            <label class="form-label">Имя</label>
+                            <input type="text" name="first_name" class="form-control" value="{{ profile.first_name }}" maxlength="100">
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label class="form-label">Фамилия</label>
+                            <input type="text" name="last_name" class="form-control" value="{{ profile.last_name }}" maxlength="100">
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label class="form-label">Описание профиля</label>
+                            <textarea name="bio" class="form-control" rows="3" maxlength="500">{{ profile.bio }}</textarea>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label class="form-label">Дата рождения</label>
+                            <input type="date" name="birth_date" class="form-control" value="{% if profile.birth_date %}{{ profile.birth_date|date:'Y-m-d' }}{% endif %}">
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label class="form-label">Аватар</label>
+                            {% if profile.avatar %}
+                                <div style="margin-bottom: 0.5rem;">
+                                    <img src="{{ profile.avatar.url }}" alt="Текущий аватар" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">
+                                </div>
+                            {% endif %}
+                            <input type="file" name="avatar" accept="image/*" class="form-control">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">Сохранить изменения</button>
+                        </div>
+                    </form>
+                    <div class="auth-links">
+                        <a href="{% url 'profile' %}">← Вернуться к профилю</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>CoinCortex 2025</p>
+    </footer>
+</body>
+</html>
+

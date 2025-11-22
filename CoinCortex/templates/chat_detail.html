@@ -14,7 +14,10 @@
             <ul>
                 <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
                 <li class="nav-left"><a href="{% url 'chat' %}">← Назад к чатам</a></li>
+                <li class="nav-left"><a href="{% url 'groups_list' %}">Сообщества</a></li>
                 {% if user.is_authenticated %}
+                    <li class="nav-right"><a href="{% url 'notifications' %}">Уведомления</a></li>
+                    <li class="nav-right"><a href="{% url 'friends' %}">Друзья</a></li>
                     <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
                     <li class="nav-right">
                         <form method="post" action="{% url 'loginout' %}" style="display: inline;">
@@ -34,10 +37,15 @@
         <div class="chat-detail-container">
             <div class="chat-header">
                 <div class="chat-user-info">
-                    <div class="chat-avatar-large">
-                        {{ other_user.username|first|upper }}
+                    <div class="chat-avatar-large" style="{% if other_user.profile.avatar %}background-image: url('{{ other_user.profile.avatar.url }}'); background-size: cover;{% endif %}">
+                        {% if not other_user.profile.avatar %}{{ other_user.username|first|upper }}{% endif %}
                     </div>
-                    <h1>Чат с {{ other_user.username }}</h1>
+                    <div>
+                        <h1>{{ other_user.username }}</h1>
+                        {% if other_user.profile.get_full_name != other_user.username %}
+                            <p style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin: 0;">{{ other_user.profile.get_full_name }}</p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 

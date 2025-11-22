@@ -14,7 +14,10 @@
             <ul>
                 <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
                 <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
+                <li class="nav-left"><a href="{% url 'groups_list' %}">Сообщества</a></li>
                 {% if user.is_authenticated %}
+                    <li class="nav-right"><a href="{% url 'notifications' %}">Уведомления</a></li>
+                    <li class="nav-right"><a href="{% url 'friends' %}">Друзья</a></li>
                     <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
                     <li class="nav-right">
                         <form method="post" action="{% url 'loginout' %}" style="display: inline;">
@@ -37,35 +40,58 @@
                 <p>Общайтесь с друзьями</p>
             </div>
 
+            <!-- Поиск друзей для нового чата -->
+            <div class="search-section" style="max-width: 600px; margin: 0 auto 2rem;">
+                <h3>Начать новый чат</h3>
+                <form method="GET" class="search-form">
+                    <input type="text" name="search" value="{{ search_query }}" placeholder="Поиск друга по имени..." class="search-input">
+                    <button type="submit" class="search-btn">🔍</button>
+                </form>
+                {% if search_query and search_results %}
+                <div class="search-results" style="margin-top: 1rem;">
+                    <h4>Результаты поиска:</h4>
+                    {% for friend in search_results %}
+                    <div class="search-result-item">
+                        <div class="result-avatar" style="{% if friend.profile.avatar %}background-image: url('{{ friend.profile.avatar.url }}'); background-size: cover;{% endif %}">
+                            {% if not friend.profile.avatar %}{{ friend.username|first|upper }}{% endif %}
+                        </div>
+                        <span class="result-username">{{ friend.username }}</span>
+                        <a href="{% url 'start_chat' username=friend.username %}" class="btn-primary" style="padding: 0.5rem 1rem; text-decoration: none; font-size: 0.9rem;">Начать чат</a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif search_query %}
+                <p class="no-results" style="margin-top: 1rem;">Друзья не найдены</p>
+                {% endif %}
+            </div>
+
             <div class="chats-list">
                 {% if chats %}
-                    {% for chat in chats %}
-                    <a href="{% url 'chat_detail' chat.id %}" class="chat-item">
-                        <div class="chat-avatar">
-                            {{ chat.get_other_participant.user.username|first|upper }}
+                    {% for item in chats %}
+                    <a href="{% url 'chat_detail' chat_id=item.chat.id %}" class="chat-item">
+                        <div class="chat-avatar" style="{% if item.other_user.profile.avatar %}background-image: url('{{ item.other_user.profile.avatar.url }}'); background-size: cover;{% endif %}">
+                            {% if not item.other_user.profile.avatar %}{{ item.other_user.username|first|upper }}{% endif %}
                         </div>
                         <div class="chat-info">
-                            <div class="chat-user">{{ chat.get_other_participant.user.username }}</div>
+                            <div class="chat-user">{{ item.other_user.username }}</div>
                             <div class="chat-last-message">
-                                {% with last_message=chat.get_last_message %}
-                                    {% if last_message %}
-                                        {% if last_message.sender == user %}
-                                            <strong>Вы:</strong> 
-                                        {% endif %}
-                                        {{ last_message.text|truncatechars:50 }}
-                                    {% else %}
-                                        Нет сообщений
+                                {% if item.last_message %}
+                                    {% if item.last_message.sender == user %}
+                                        <strong>Вы:</strong> 
                                     {% endif %}
-                                {% endwith %}
+                                    {{ item.last_message.text|truncatechars:50 }}
+                                {% else %}
+                                    Нет сообщений
+                                {% endif %}
                             </div>
                         </div>
                         <div class="chat-meta">
-                            {% with last_message=chat.get_last_message %}
-                                {% if last_message %}
-                                    <div class="chat-time">{{ last_message.created|date:"H:i" }}</div>
-                                {% endif %}
-                            {% endwith %}
-                            <!-- Временно уберем бейдж непрочитанных -->
+                            {% if item.last_message %}
+                                <div class="chat-time">{{ item.last_message.created|date:"H:i" }}</div>
+                            {% endif %}
+                            {% if item.unread_count > 0 %}
+                                <div class="unread-badge">{{ item.unread_count }}</div>
+                            {% endif %}
                         </div>
                     </a>
                     {% endfor %}

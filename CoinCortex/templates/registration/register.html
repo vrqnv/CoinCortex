@@ -20,9 +20,45 @@
             
             <form method="post" class="auth-form">
                 {% csrf_token %}
-                {% bootstrap_form form %}
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">Имя пользователя *</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="invalid-feedback">{{ form.username.errors }}</div>
+                    {% endif %}
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">Пароль *</label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                        <div class="invalid-feedback">{{ form.password1.errors }}</div>
+                    {% endif %}
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">Подтверждение пароля *</label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                        <div class="invalid-feedback">{{ form.password2.errors }}</div>
+                    {% endif %}
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">Имя</label>
+                    {{ form.first_name }}
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">Фамилия</label>
+                    {{ form.last_name }}
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">Описание профиля</label>
+                    {{ form.bio }}
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label class="form-label">Дата рождения</label>
+                    {{ form.birth_date }}
+                </div>
                 <div class="form-actions">
-                    {% bootstrap_button button_type="submit" content="Зарегистрироваться" button_class="btn-primary" %}
+                    <button type="submit" class="btn-primary">Зарегистрироваться</button>
                 </div>
             </form>
             <div class="auth-links">

@@ -1,0 +1,150 @@
+<!-- templates/friends.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>Друзья</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
+                <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
+                <li class="nav-left"><a href="{% url 'groups_list' %}">Сообщества</a></li>
+                {% if user.is_authenticated %}
+                    <li class="nav-right"><a href="{% url 'notifications' %}">Уведомления</a></li>
+                    <li class="nav-right"><a href="{% url 'friends' %}">Друзья</a></li>
+                    <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
+                    <li class="nav-right">
+                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">Выйти</button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
+                    <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="feed-container">
+            <div class="feed-header">
+                <h1>Друзья</h1>
+                <p>Найдите новых друзей или управляйте существующими</p>
+            </div>
+
+            <!-- Поиск друзей -->
+            <div class="search-section" style="max-width: 600px; margin: 0 auto 2rem;">
+                <h3>Поиск друзей</h3>
+                <form method="GET" class="search-form">
+                    <input type="text" name="search" value="{{ search_query }}" placeholder="Введите имя пользователя..." class="search-input">
+                    <button type="submit" class="search-btn">🔍</button>
+                </form>
+
+                <!-- Результаты поиска -->
+                {% if search_query %}
+                <div class="search-results" style="margin-top: 1rem;">
+                    <h4>Результаты поиска:</h4>
+                    {% if search_results %}
+                        {% for result in search_results %}
+                        <div class="search-result-item">
+                            <div class="result-avatar" style="{% if result.profile.avatar %}background-image: url('{{ result.profile.avatar.url }}'); background-size: cover;{% endif %}">
+                                {% if not result.profile.avatar %}{{ result.username|first|upper }}{% endif %}
+                            </div>
+                            <span class="result-username">{{ result.username }}</span>
+                            <form method="POST" class="add-friend-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="add_friend" value="{{ result.username }}">
+                                <button type="submit" class="add-friend-btn" title="Добавить в друзья">
+                                    +
+                                </button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="no-results">Пользователи не найдены</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Входящие заявки -->
+            {% if incoming_requests %}
+            <div class="posts-section" style="margin-bottom: 2rem;">
+                <h2>Заявки в друзья</h2>
+                <div class="friends-list">
+                    {% for request in incoming_requests %}
+                    <div class="friend-item">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div class="friend-avatar" style="{% if request.from_user.profile.avatar %}background-image: url('{{ request.from_user.profile.avatar.url }}'); background-size: cover;{% endif %}">
+                                {% if not request.from_user.profile.avatar %}{{ request.from_user.username|first|upper }}{% endif %}
+                            </div>
+                            <span class="friend-username">{{ request.from_user.username }}</span>
+                        </div>
+                        <form method="POST" class="accept-friend-form" style="margin-top: 0.5rem;">
+                            {% csrf_token %}
+                            <input type="hidden" name="accept_friend" value="{{ request.id }}">
+                            <button type="submit" class="accept-friend-btn">Принять</button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Список друзей -->
+            <div class="posts-section">
+                <h2>Мои друзья</h2>
+                <div class="friends-list">
+                    {% if friends %}
+                        {% for friend in friends %}
+                        <div class="friend-item">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div class="friend-avatar" style="{% if friend.profile.avatar %}background-image: url('{{ friend.profile.avatar.url }}'); background-size: cover;{% endif %}">
+                                    {% if not friend.profile.avatar %}{{ friend.username|first|upper }}{% endif %}
+                                </div>
+                                <a href="{% url 'user_profile' username=friend.username %}" class="friend-username">
+                                    {{ friend.username }}
+                                </a>
+                            </div>
+                            <div class="friend-actions" style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+                                <a href="/chat/start/{{ friend.username }}/" class="btn-primary" style="padding: 0.5rem 1rem; text-decoration: none;">💬 Написать</a>
+                                <form method="POST" class="remove-friend-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="remove_friend" value="{{ friend.username }}">
+                                    <button type="submit" class="remove-friend-btn large">Удалить</button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="no-friends">У вас пока нет друзей</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>CoinCortex 2025</p>
+    </footer>
+</body>
+</html>
+

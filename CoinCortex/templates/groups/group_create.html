@@ -1,0 +1,92 @@
+<!-- templates/groups/group_create.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>Создать группу</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
+                <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
+                <li class="nav-left"><a href="{% url 'groups_list' %}">Сообщества</a></li>
+                {% if user.is_authenticated %}
+                    <li class="nav-right"><a href="{% url 'notifications' %}">Уведомления</a></li>
+                    <li class="nav-right"><a href="{% url 'friends' %}">Друзья</a></li>
+                    <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
+                    <li class="nav-right">
+                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">Выйти</button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
+                    <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="card-header">
+                    <h2>Создать новое сообщество</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data" class="auth-form">
+                        {% csrf_token %}
+                        <div style="margin-bottom: 1rem;">
+                            <label class="form-label">Название сообщества *</label>
+                            <input type="text" name="name" class="form-control" placeholder="Введите название сообщества" required maxlength="200">
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label class="form-label">Тематика *</label>
+                            <select name="theme" class="form-control" required>
+                                {% for theme_code, theme_name in themes %}
+                                    <option value="{{ theme_code }}">{{ theme_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label class="form-label">Описание</label>
+                            <textarea name="description" class="form-control" placeholder="Опишите ваше сообщество..." rows="4" maxlength="1000"></textarea>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label class="form-label">Аватар сообщества</label>
+                            <input type="file" name="avatar" accept="image/*" class="form-control">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">Создать сообщество</button>
+                        </div>
+                    </form>
+                    <div class="auth-links">
+                        <a href="{% url 'groups_list' %}">← Вернуться к списку сообществ</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>CoinCortex 2025</p>
+    </footer>
+</body>
+</html>
+

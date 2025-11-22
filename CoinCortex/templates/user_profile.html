@@ -14,7 +14,10 @@
             <ul>
                 <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
                 <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
+                <li class="nav-left"><a href="{% url 'groups_list' %}">Сообщества</a></li>
                 {% if user.is_authenticated %}
+                    <li class="nav-right"><a href="{% url 'notifications' %}">Уведомления</a></li>
+                    <li class="nav-right"><a href="{% url 'friends' %}">Друзья</a></li>
                     <li class="nav-right"><a href="{% url 'profile' %}">Мой профиль</a></li>
                     <li class="nav-right">
                         <form method="post" action="{% url 'loginout' %}" style="display: inline;">

@@ -1,0 +1,201 @@
+<!-- templates/groups/my_groups.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>Мои группы</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
+                <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
+                <li class="nav-left"><a href="{% url 'groups_list' %}">Сообщества</a></li>
+                {% if user.is_authenticated %}
+                    <li class="nav-right"><a href="{% url 'notifications' %}">Уведомления</a></li>
+                    <li class="nav-right"><a href="{% url 'friends' %}">Друзья</a></li>
+                    <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
+                    <li class="nav-right">
+                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">Выйти</button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
+                    <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="feed-container">
+            <div class="feed-header">
+                <h1>Мои сообщества</h1>
+                <p>Управляйте своими сообществами и подписками</p>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <a href="{% url 'group_create' %}" class="btn-primary" style="margin-right: 1rem;">Создать сообщество</a>
+                <a href="{% url 'groups_list' %}" class="btn-secondary">Все сообщества</a>
+            </div>
+
+            <!-- Созданные сообщества -->
+            {% if created_groups %}
+            <div class="posts-section" style="margin-bottom: 2rem;">
+                <h2>Созданные мной сообщества</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                    {% for group in created_groups %}
+                    <div class="post-card">
+                        <div class="post-header">
+                            <div class="post-author">
+                                <div class="post-avatar" style="{% if group.avatar %}background-image: url('{{ group.avatar.url }}'); background-size: cover;{% endif %}">
+                                    {% if not group.avatar %}{{ group.name|first|upper }}{% endif %}
+                                </div>
+                                <div class="author-info">
+                                    <strong><a href="{% url 'group_detail' group_id=group.id %}" style="color: #1f2937; text-decoration: none;">{{ group.name }}</a></strong>
+                                    <span class="post-community">Владелец</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="post-content">
+                            {% if group.description %}
+                                {{ group.description|truncatewords:15 }}
+                            {% else %}
+                                <em style="color: #6b7280;">Нет описания</em>
+                            {% endif %}
+                        </div>
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; font-size: 0.9rem; color: #6b7280;">
+                            <span>👥 {{ group.subscribers_count }} подписчиков</span>
+                            <span>⭐ Рейтинг: 
+                                {% if group.total_rating > 0 %}
+                                    <span style="color: #059669;">+{{ group.total_rating }}</span>
+                                {% elif group.total_rating < 0 %}
+                                    <span style="color: #ef4444;">{{ group.total_rating }}</span>
+                                {% else %}
+                                    <span>0</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <a href="{% url 'group_detail' group_id=group.id %}" class="btn-primary" style="display: block; text-align: center; padding: 0.5rem;">Управлять</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Сообщества, где пользователь редактор -->
+            {% if edited_groups %}
+            <div class="posts-section" style="margin-bottom: 2rem;">
+                <h2>Сообщества, где я редактор</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                    {% for group in edited_groups %}
+                    <div class="post-card">
+                        <div class="post-header">
+                            <div class="post-author">
+                                <div class="post-avatar" style="{% if group.avatar %}background-image: url('{{ group.avatar.url }}'); background-size: cover;{% endif %}">
+                                    {% if not group.avatar %}{{ group.name|first|upper }}{% endif %}
+                                </div>
+                                <div class="author-info">
+                                    <strong><a href="{% url 'group_detail' group_id=group.id %}" style="color: #1f2937; text-decoration: none;">{{ group.name }}</a></strong>
+                                    <span class="post-community">Редактор</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="post-content">
+                            {% if group.description %}
+                                {{ group.description|truncatewords:15 }}
+                            {% else %}
+                                <em style="color: #6b7280;">Нет описания</em>
+                            {% endif %}
+                        </div>
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; font-size: 0.9rem; color: #6b7280;">
+                            <span>👥 {{ group.subscribers_count }} подписчиков</span>
+                            <span>⭐ Рейтинг: 
+                                {% if group.total_rating > 0 %}
+                                    <span style="color: #059669;">+{{ group.total_rating }}</span>
+                                {% elif group.total_rating < 0 %}
+                                    <span style="color: #ef4444;">{{ group.total_rating }}</span>
+                                {% else %}
+                                    <span>0</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <a href="{% url 'group_detail' group_id=group.id %}" class="btn-primary" style="display: block; text-align: center; padding: 0.5rem;">Открыть</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Подписанные группы -->
+            {% if subscribed_groups %}
+            <div class="posts-section">
+                <h2>Мои подписки</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                    {% for group in subscribed_groups %}
+                    <div class="post-card">
+                        <div class="post-header">
+                            <div class="post-author">
+                                <div class="post-avatar" style="{% if group.avatar %}background-image: url('{{ group.avatar.url }}'); background-size: cover;{% endif %}">
+                                    {% if not group.avatar %}{{ group.name|first|upper }}{% endif %}
+                                </div>
+                                <div class="author-info">
+                                    <strong><a href="{% url 'group_detail' group_id=group.id %}" style="color: #1f2937; text-decoration: none;">{{ group.name }}</a></strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="post-content">
+                            {% if group.description %}
+                                {{ group.description|truncatewords:15 }}
+                            {% else %}
+                                <em style="color: #6b7280;">Нет описания</em>
+                            {% endif %}
+                        </div>
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; font-size: 0.9rem; color: #6b7280;">
+                            <span>👥 {{ group.subscribers_count }} подписчиков</span>
+                            <span>⭐ Рейтинг: 
+                                {% if group.total_rating > 0 %}
+                                    <span style="color: #059669;">+{{ group.total_rating }}</span>
+                                {% elif group.total_rating < 0 %}
+                                    <span style="color: #ef4444;">{{ group.total_rating }}</span>
+                                {% else %}
+                                    <span>0</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <a href="{% url 'group_detail' group_id=group.id %}" class="btn-primary" style="display: block; text-align: center; padding: 0.5rem;">Открыть</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Если нет сообществ -->
+            {% if not created_groups and not edited_groups and not subscribed_groups %}
+            <div class="no-posts">
+                <p>У вас пока нет сообществ</p>
+                <p><a href="{% url 'group_create' %}" class="btn-primary">Создайте свое первое сообщество</a></p>
+                <p style="margin-top: 1rem;"><a href="{% url 'groups_list' %}" class="btn-secondary">Или найдите интересные сообщества</a></p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <footer>
+        <p>CoinCortex 2025</p>
+    </footer>
+</body>
+</html>
+
