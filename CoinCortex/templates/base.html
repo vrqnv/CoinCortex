@@ -11,8 +11,8 @@
     <header>
         <nav>
             <ul>
-                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
                 {% if user.is_authenticated %}
+                    <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
                     <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
                     <li class="nav-left"><a href="{% url 'groups_list' %}">Сообщества</a></li>
                     <li class="nav-center"><a href="{% url 'index' %}"><img src="{% static 'logo.png' %}" alt="Logo" style="height: 40px; width: auto;"></a></li>
