@@ -1,0 +1,46 @@
+<!-- templates/groups/group_delete.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Удаление сообщества - {{ group.name }}{% endblock %}
+
+{% block content %}
+        <div class="feed-container">
+            <div class="auth-card">
+                <div class="card-header" style="background: linear-gradient(135deg, #EF4444, #DC2626);">
+                    <h2>⚠️ Удаление сообщества</h2>
+                </div>
+                <div class="card-body">
+                    <div style="text-align: center; margin-bottom: 2rem;">
+                        <div class="avatar" style="width: 80px; height: 80px; margin: 0 auto 1rem; {% if group.avatar %}background-image: url('{{ group.avatar.url }}'); background-size: cover;{% endif %}">
+                            {% if not group.avatar %}{{ group.name|first|upper }}{% endif %}
+                        </div>
+                        <h3 style="color: var(--gray-800); margin-bottom: 1rem;">{{ group.name }}</h3>
+                        <p style="color: var(--gray-600); margin-bottom: 2rem;">
+                            Вы собираетесь удалить сообщество <strong>"{{ group.name }}"</strong>.
+                        </p>
+                        <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #EF4444; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: left;">
+                            <p style="color: #EF4444; font-weight: 700; margin-bottom: 0.5rem;">⚠️ Это действие нельзя отменить!</p>
+                            <ul style="color: var(--gray-700); margin: 0; padding-left: 1.5rem;">
+                                <li>Все посты будут удалены</li>
+                                <li>Все подписки будут отменены</li>
+                                <li>Все комментарии будут удалены</li>
+                                <li>Все данные сообщества будут безвозвратно потеряны</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <form method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
+                        {% csrf_token %}
+                        <div style="display: flex; gap: 1rem; justify-content: center;">
+                            <a href="{% url 'group_detail' group_id=group.id %}" class="btn-secondary" style="text-decoration: none;">Отмена</a>
+                            <button type="submit" name="delete_group" value="1" class="remove-friend-btn large" style="display: inline-block; text-decoration: none; border: none; cursor: pointer;">
+                                🗑️ Да, удалить сообщество
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+{% endblock %}
+

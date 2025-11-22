@@ -93,6 +93,31 @@ class PostComment(models.Model):
     def can_delete(self, user):
         """Проверяет, может ли пользователь удалить комментарий"""
         return self.author == user
+    
+    def get_likes_count(self):
+        """Получить количество лайков"""
+        return PostCommentLike.objects.filter(comment=self).count()
+    
+    def is_liked_by(self, user):
+        """Проверить, лайкнул ли пользователь комментарий"""
+        if not user.is_authenticated:
+            return False
+        return PostCommentLike.objects.filter(comment=self, user=user).exists()
+
+
+class PostCommentLike(models.Model):
+    """Модель лайка комментария к посту"""
+    comment = models.ForeignKey(PostComment, on_delete=models.CASCADE, related_name='likes', verbose_name='Комментарий')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='post_comment_likes', verbose_name='Пользователь')
+    created = models.DateTimeField(auto_now_add=True, verbose_name='Дата лайка')
+    
+    class Meta:
+        unique_together = ('comment', 'user')
+        verbose_name = 'Лайк комментария'
+        verbose_name_plural = 'Лайки комментариев'
+    
+    def __str__(self):
+        return f"{self.user.username} лайкнул комментарий {self.comment.id}"
 
 # UserRating удален - рейтинг друзьям больше не нужен
 
@@ -185,7 +210,7 @@ class Message(models.Model):
         ordering = ['created']
     
     def __str__(self):
-        return f"Message from {self.sender} in chat {self.chat.id}"
+        return f"Message in chat {self.chat.id}"
 
 # Добавляем метод к User для удобства
 def get_or_create_chat(self, other_user):
@@ -206,8 +231,10 @@ class Notification(models.Model):
     NOTIFICATION_TYPES = [
         ('like', 'Лайк'),
         ('comment', 'Комментарий'),
+        ('comment_like', 'Лайк на комментарий'),
         ('group_like', 'Лайк в группе'),
         ('group_comment', 'Комментарий в группе'),
+        ('group_comment_like', 'Лайк на комментарий в группе'),
         ('friend_request', 'Заявка в друзья'),
         ('friend_accepted', 'Заявка принята'),
     ]
@@ -217,6 +244,8 @@ class Notification(models.Model):
     from_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications', null=True, blank=True, verbose_name='От пользователя')
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True, verbose_name='Пост')
     group_post = models.ForeignKey('groups.GroupPost', on_delete=models.CASCADE, related_name='notifications', null=True, blank=True, verbose_name='Пост группы')
+    comment = models.ForeignKey(PostComment, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True, verbose_name='Комментарий')
+    group_comment = models.ForeignKey('groups.GroupPostComment', on_delete=models.CASCADE, related_name='notifications', null=True, blank=True, verbose_name='Комментарий группы')
     created = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     read = models.BooleanField(default=False, verbose_name='Прочитано')
     

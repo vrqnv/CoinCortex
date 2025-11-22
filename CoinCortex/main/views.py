@@ -9,6 +9,7 @@ from .models import (
     Post,
     PostLike,
     PostComment,
+    PostCommentLike,
     Friendship,
     Chat,
     Message,
@@ -95,7 +96,7 @@ def index(request):
                     else:
                         # Комментарий к обычному посту
                         post = Post.objects.get(id=post_id)
-                        PostComment.objects.create(
+                        comment = PostComment.objects.create(
                             post=post, author=request.user, content=comment_text
                         )
                         if post.author != request.user:
@@ -108,6 +109,53 @@ def index(request):
                         messages.success(request, "Комментарий добавлен")
                 except (Post.DoesNotExist, Exception):
                     messages.error(request, "Пост не найден")
+            return redirect("index")
+
+        # Лайк комментария
+        elif "like_comment" in request.POST:
+            comment_id = request.POST.get("like_comment")
+            try:
+                if comment_id.startswith("group_"):
+                    # Лайк комментария группы
+                    from groups.models import GroupPostComment, GroupPostCommentLike
+
+                    comment_id = comment_id.replace("group_", "")
+                    comment = GroupPostComment.objects.get(id=comment_id)
+                    like, created = GroupPostCommentLike.objects.get_or_create(
+                        comment=comment, user=request.user
+                    )
+                    if not created:
+                        like.delete()
+                        messages.info(request, "Лайк убран")
+                    else:
+                        if comment.author != request.user:
+                            Notification.objects.create(
+                                user=comment.author,
+                                notification_type="group_comment_like",
+                                from_user=request.user,
+                                group_comment=comment,
+                            )
+                        messages.success(request, "Лайк поставлен")
+                else:
+                    # Лайк обычного комментария
+                    comment = PostComment.objects.get(id=comment_id)
+                    like, created = PostCommentLike.objects.get_or_create(
+                        comment=comment, user=request.user
+                    )
+                    if not created:
+                        like.delete()
+                        messages.info(request, "Лайк убран")
+                    else:
+                        if comment.author != request.user:
+                            Notification.objects.create(
+                                user=comment.author,
+                                notification_type="comment_like",
+                                from_user=request.user,
+                                comment=comment,
+                            )
+                        messages.success(request, "Лайк поставлен")
+            except (PostComment.DoesNotExist, Exception):
+                messages.error(request, "Комментарий не найден")
             return redirect("index")
 
     # Получаем посты для авторизованных пользователей
@@ -133,10 +181,10 @@ def index(request):
             user=request.user, is_subscribed=True
         ).values_list("group_id", flat=True)
 
-        # Получаем посты от друзей
+        # Получаем посты от друзей и свои посты
         friends_posts = (
             Post.objects.filter(
-                Q(author__in=friends_ids) | Q(wall_owner__in=friends_ids)
+                Q(author__in=friends_ids) | Q(wall_owner__in=friends_ids) | Q(author=request.user)
             )
             .select_related("author", "wall_owner")
             .order_by("-created")
@@ -152,6 +200,17 @@ def index(request):
         # Добавляем посты друзей
         for post in friends_posts:
             is_liked = post.is_liked_by(request.user)
+            comments = post.comments.select_related("author").all()
+            # Добавляем информацию о лайках для каждого комментария
+            comments_with_likes = []
+            for comment in comments[:5]:
+                comments_with_likes.append({
+                    'comment': comment,
+                    'is_liked': comment.is_liked_by(request.user),
+                    'likes_count': comment.get_likes_count(),
+                })
+            # Самый популярный комментарий (первый по дате, если нет лайков)
+            top_comment = comments.first() if comments.exists() else None
             all_posts.append(
                 {
                     "post": post,
@@ -159,13 +218,25 @@ def index(request):
                     "is_liked": is_liked,
                     "likes_count": post.get_likes_count(),
                     "comments_count": post.get_comments_count(),
-                    "comments": post.comments.select_related("author").all()[:5],
+                    "comments": comments_with_likes,
+                    "top_comment": top_comment,
                 }
             )
 
         # Добавляем посты из групп
         for post in group_posts:
             is_liked = post.is_liked_by(request.user)
+            comments = post.comments.select_related("author").all()
+            # Добавляем информацию о лайках для каждого комментария
+            comments_with_likes = []
+            for comment in comments[:5]:
+                comments_with_likes.append({
+                    'comment': comment,
+                    'is_liked': comment.is_liked_by(request.user),
+                    'likes_count': comment.get_likes_count(),
+                })
+            # Самый популярный комментарий (первый по дате, если нет лайков)
+            top_comment = comments.first() if comments.exists() else None
             all_posts.append(
                 {
                     "post": post,
@@ -173,7 +244,8 @@ def index(request):
                     "is_liked": is_liked,
                     "likes_count": post.get_likes_count(),
                     "comments_count": post.get_comments_count(),
-                    "comments": post.comments.select_related("author").all()[:5],
+                    "comments": comments_with_likes,
+                    "top_comment": top_comment,
                 }
             )
     else:
@@ -197,6 +269,8 @@ def index(request):
         )
 
         for post in group_posts:
+            comments = post.comments.select_related("author").all()
+            top_comment = comments.first() if comments.exists() else None
             all_posts.append(
                 {
                     "post": post,
@@ -204,7 +278,8 @@ def index(request):
                     "is_liked": False,
                     "likes_count": post.get_likes_count(),
                     "comments_count": post.get_comments_count(),
-                    "comments": post.comments.select_related("author").all()[:5],
+                    "comments": comments[:5],
+                    "top_comment": top_comment,
                 }
             )
 
@@ -417,7 +492,7 @@ def profile(request):
                     else:
                         # Комментарий к обычному посту
                         post = Post.objects.get(id=post_id)
-                        PostComment.objects.create(
+                        comment = PostComment.objects.create(
                             post=post, author=request.user, content=comment_text
                         )
                         if post.author != request.user:
@@ -433,6 +508,102 @@ def profile(request):
             referer = request.META.get("HTTP_REFERER", "index")
             return redirect(referer)
 
+        # Лайк комментария
+        elif "like_comment" in request.POST:
+            comment_id = request.POST.get("like_comment")
+            try:
+                if comment_id.startswith("group_"):
+                    # Лайк комментария группы
+                    from groups.models import GroupPostComment, GroupPostCommentLike
+
+                    comment_id = comment_id.replace("group_", "")
+                    comment = GroupPostComment.objects.get(id=comment_id)
+                    like, created = GroupPostCommentLike.objects.get_or_create(
+                        comment=comment, user=request.user
+                    )
+                    if not created:
+                        like.delete()
+                        messages.info(request, "Лайк убран")
+                    else:
+                        if comment.author != request.user:
+                            Notification.objects.create(
+                                user=comment.author,
+                                notification_type="group_comment_like",
+                                from_user=request.user,
+                                group_comment=comment,
+                            )
+                        messages.success(request, "Лайк поставлен")
+                else:
+                    # Лайк обычного комментария
+                    comment = PostComment.objects.get(id=comment_id)
+                    like, created = PostCommentLike.objects.get_or_create(
+                        comment=comment, user=request.user
+                    )
+                    if not created:
+                        like.delete()
+                        messages.info(request, "Лайк убран")
+                    else:
+                        if comment.author != request.user:
+                            Notification.objects.create(
+                                user=comment.author,
+                                notification_type="comment_like",
+                                from_user=request.user,
+                                comment=comment,
+                            )
+                        messages.success(request, "Лайк поставлен")
+            except (PostComment.DoesNotExist, Exception):
+                messages.error(request, "Комментарий не найден")
+            referer = request.META.get("HTTP_REFERER", "index")
+            return redirect(referer)
+
+        # Лайк комментария
+        elif "like_comment" in request.POST:
+            comment_id = request.POST.get("like_comment")
+            try:
+                if comment_id.startswith("group_"):
+                    # Лайк комментария группы
+                    from groups.models import GroupPostComment, GroupPostCommentLike
+
+                    comment_id = comment_id.replace("group_", "")
+                    comment = GroupPostComment.objects.get(id=comment_id)
+                    like, created = GroupPostCommentLike.objects.get_or_create(
+                        comment=comment, user=request.user
+                    )
+                    if not created:
+                        like.delete()
+                        messages.info(request, "Лайк убран")
+                    else:
+                        if comment.author != request.user:
+                            Notification.objects.create(
+                                user=comment.author,
+                                notification_type="group_comment_like",
+                                from_user=request.user,
+                                group_comment=comment,
+                            )
+                        messages.success(request, "Лайк поставлен")
+                else:
+                    # Лайк обычного комментария
+                    comment = PostComment.objects.get(id=comment_id)
+                    like, created = PostCommentLike.objects.get_or_create(
+                        comment=comment, user=request.user
+                    )
+                    if not created:
+                        like.delete()
+                        messages.info(request, "Лайк убран")
+                    else:
+                        if comment.author != request.user:
+                            Notification.objects.create(
+                                user=comment.author,
+                                notification_type="comment_like",
+                                from_user=request.user,
+                                comment=comment,
+                            )
+                        messages.success(request, "Лайк поставлен")
+            except (PostComment.DoesNotExist, Exception):
+                messages.error(request, "Комментарий не найден")
+            referer = request.META.get("HTTP_REFERER", "index")
+            return redirect(referer)
+
     # Получаем последние посты текущего пользователя с оптимизацией
     user_posts = (
         Post.objects.filter(author=request.user)
@@ -443,15 +614,21 @@ def profile(request):
     # Добавляем информацию о лайках для каждого поста
     posts_with_info = []
     for post in user_posts:
+        comments = post.comments.select_related("author").all()[:5]
+        comments_with_likes = []
+        for comment in comments:
+            comments_with_likes.append({
+                'comment': comment,
+                'is_liked': comment.is_liked_by(request.user),
+                'likes_count': comment.get_likes_count(),
+            })
         posts_with_info.append(
             {
                 "post": post,
                 "is_liked": post.is_liked_by(request.user),
                 "likes_count": post.get_likes_count(),
                 "comments_count": post.get_comments_count(),
-                "comments": post.comments.select_related("author").all()[
-                    :5
-                ],  # Последние 5 комментариев
+                "comments": comments_with_likes,
             }
         )
 
@@ -595,7 +772,7 @@ def user_profile(request, username):
                 if comment_text:
                     try:
                         post = Post.objects.get(id=post_id)
-                        PostComment.objects.create(
+                        comment = PostComment.objects.create(
                             post=post, author=request.user, content=comment_text
                         )
                         if post.author != request.user:
@@ -629,13 +806,21 @@ def user_profile(request, username):
         # Добавляем информацию о лайках и комментариях
         posts_with_info = []
         for post in user_posts:
+            comments = post.comments.select_related("author").all()[:5]
+            comments_with_likes = []
+            for comment in comments:
+                comments_with_likes.append({
+                    'comment': comment,
+                    'is_liked': comment.is_liked_by(request.user),
+                    'likes_count': comment.get_likes_count(),
+                })
             posts_with_info.append(
                 {
                     "post": post,
                     "is_liked": post.is_liked_by(request.user),
                     "likes_count": post.get_likes_count(),
                     "comments_count": post.get_comments_count(),
-                    "comments": post.comments.select_related("author").all()[:5],
+                    "comments": comments_with_likes,
                 }
             )
 
@@ -696,9 +881,21 @@ def chat(request):
     search_query = request.GET.get("search", "").strip()
     search_results = []
     if search_query:
-        # Ищем среди друзей
-        friends = request.user.get_friends()
-        search_results = friends.filter(
+        # Ищем среди друзей - преобразуем union в список перед фильтрацией
+        sent_friends = User.objects.filter(
+            friendship_requests_received__from_user=request.user,
+            friendship_requests_received__accepted=True,
+        )
+        received_friends = User.objects.filter(
+            friendship_requests_sent__to_user=request.user,
+            friendship_requests_sent__accepted=True,
+        )
+        friends_list = list(sent_friends.union(received_friends))
+        friends_ids = [f.id for f in friends_list]
+        
+        # Теперь фильтруем по поисковому запросу
+        search_results = User.objects.filter(
+            id__in=friends_ids,
             username__icontains=search_query
         ).select_related("profile")[:10]
 

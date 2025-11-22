@@ -53,8 +53,9 @@
                                 {% endif %}
                             </span>
                         </div>
-                        <div style="margin-top: 1rem;">
-                            <a href="{% url 'group_detail' group_id=group.id %}" class="btn-primary" style="display: block; text-align: center; padding: 0.5rem;">Управлять</a>
+                        <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                            <a href="{% url 'group_detail' group_id=group.id %}" class="btn-primary" style="flex: 1; text-align: center; padding: 0.5rem; text-decoration: none;">Управлять</a>
+                            <a href="{% url 'group_delete' group_id=group.id %}" class="btn-secondary" style="padding: 0.5rem 1rem; text-decoration: none; background: #ef4444; color: white; border: none; border-radius: 12px; font-weight: 600; transition: all 0.3s ease;" onclick="return confirm('Вы уверены, что хотите удалить сообщество? Это действие нельзя отменить.');">🗑️</a>
                         </div>
                     </div>
                     {% endfor %}

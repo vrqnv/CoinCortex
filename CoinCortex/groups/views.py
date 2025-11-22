@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Count, F
 from django.core.paginator import Paginator
-from .models import Group, GroupPost, GroupMember, GroupRating, GroupSubscription, GroupPostLike, GroupPostComment
+from .models import Group, GroupPost, GroupMember, GroupRating, GroupSubscription, GroupPostLike, GroupPostComment, GroupPostCommentLike
 from main.models import Notification
 from django.contrib.auth.models import User
 
@@ -97,6 +97,13 @@ def group_create(request):
             role='owner'
         )
         
+        # Автоматически подписываем создателя на сообщество
+        GroupSubscription.objects.get_or_create(
+            group=group,
+            user=request.user,
+            defaults={'is_subscribed': True}
+        )
+        
         messages.success(request, f'Сообщество "{group.name}" успешно создано!')
         return redirect('group_detail', group_id=group.id)
     
@@ -182,7 +189,7 @@ def group_detail(request, group_id):
             if comment_text:
                 try:
                     post = GroupPost.objects.get(id=post_id, group=group)
-                    GroupPostComment.objects.create(
+                    comment = GroupPostComment.objects.create(
                         post=post,
                         author=request.user,
                         content=comment_text
@@ -198,6 +205,32 @@ def group_detail(request, group_id):
                     messages.success(request, 'Комментарий добавлен')
                 except GroupPost.DoesNotExist:
                     messages.error(request, 'Пост не найден')
+            referer = request.META.get('HTTP_REFERER', 'group_detail')
+            if 'group_detail' in referer:
+                return redirect('group_detail', group_id=group.id)
+            return redirect(referer)
+        
+        # Лайк комментария группы
+        elif 'like_group_comment' in request.POST:
+            comment_id = request.POST.get('like_group_comment')
+            try:
+                comment = GroupPostComment.objects.get(id=comment_id, post__group=group)
+                like, created = GroupPostCommentLike.objects.get_or_create(comment=comment, user=request.user)
+                if not created:
+                    like.delete()
+                    messages.info(request, 'Лайк убран')
+                else:
+                    # Уведомление
+                    if comment.author != request.user:
+                        Notification.objects.create(
+                            user=comment.author,
+                            notification_type='group_comment_like',
+                            from_user=request.user,
+                            group_comment=comment
+                        )
+                    messages.success(request, 'Лайк поставлен')
+            except GroupPostComment.DoesNotExist:
+                messages.error(request, 'Комментарий не найден')
             referer = request.META.get('HTTP_REFERER', 'group_detail')
             if 'group_detail' in referer:
                 return redirect('group_detail', group_id=group.id)
@@ -270,6 +303,16 @@ def group_detail(request, group_id):
                 except GroupMember.DoesNotExist:
                     messages.error(request, 'Участник не найден')
             return redirect('group_detail', group_id=group.id)
+        
+        # Удаление сообщества
+        elif 'delete_group' in request.POST:
+            if not group.is_owner(request.user):
+                messages.error(request, 'Только владелец группы может удалить сообщество')
+            else:
+                group_name = group.name
+                group.delete()
+                messages.success(request, f'Сообщество "{group_name}" успешно удалено')
+                return redirect('my_groups')
     
     # Получаем посты группы
     posts = GroupPost.objects.filter(group=group).select_related('author', 'group').order_by('-created')
@@ -309,13 +352,25 @@ def group_detail(request, group_id):
     # Добавляем информацию о правах удаления, лайках и комментариях для каждого поста
     posts_with_permissions = []
     for post in page_obj:
+        comments = post.comments.select_related('author').all()
+        # Добавляем информацию о лайках для каждого комментария
+        comments_with_likes = []
+        for comment in comments[:10]:
+            comments_with_likes.append({
+                'comment': comment,
+                'is_liked': comment.is_liked_by(request.user),
+                'likes_count': comment.get_likes_count(),
+            })
+        # Самый популярный комментарий (первый по дате)
+        top_comment = comments.first() if comments.exists() else None
         posts_with_permissions.append({
             'post': post,
             'can_delete': post.can_delete(request.user),
             'is_liked': post.is_liked_by(request.user),
             'likes_count': post.get_likes_count(),
             'comments_count': post.get_comments_count(),
-            'comments': post.comments.select_related('author').all()[:5]  # Последние 5 комментариев
+            'comments': comments_with_likes,
+            'top_comment': top_comment
         })
     
     return render(request, 'groups/group_detail.html', {
@@ -356,6 +411,26 @@ def my_groups(request):
         'created_groups': created_groups,
         'edited_groups': edited_groups,
         'subscribed_groups': subscribed_groups
+    })
+
+
+@login_required
+def group_delete(request, group_id):
+    """Удаление сообщества (только для владельца)"""
+    group = get_object_or_404(Group, id=group_id)
+    
+    if not group.is_owner(request.user):
+        messages.error(request, 'Только владелец группы может удалить сообщество')
+        return redirect('group_detail', group_id=group.id)
+    
+    if request.method == 'POST':
+        group_name = group.name
+        group.delete()
+        messages.success(request, f'Сообщество "{group_name}" успешно удалено')
+        return redirect('my_groups')
+    
+    return render(request, 'groups/group_delete.html', {
+        'group': group
     })
 
 

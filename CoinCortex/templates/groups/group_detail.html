@@ -67,6 +67,15 @@
                     </div>
                 </div>
 
+                <!-- Удаление сообщества (только для владельца) -->
+                {% if group.user_is_owner %}
+                <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid rgba(239, 68, 68, 0.2);">
+                    <a href="{% url 'group_delete' group_id=group.id %}" class="remove-friend-btn large" style="display: inline-block; text-decoration: none;" onclick="return confirm('Вы уверены, что хотите удалить сообщество \"{{ group.name }}\"? Это действие нельзя отменить.');">
+                        🗑️ Удалить сообщество
+                    </a>
+                </div>
+                {% endif %}
+
                 <!-- Редакторы (только для владельца) -->
                 {% if group.user_is_owner %}
                 <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid rgba(102, 126, 234, 0.1);">
@@ -120,7 +129,7 @@
                 <div class="posts-list">
                     {% if posts %}
                         {% for item in posts %}
-                        <div class="post-card">
+                        <div class="post-card compact-post">
                             <div class="post-header">
                                 <div class="post-author">
                                     <!-- Для постов от сообщества показываем аватарку и название группы, без имени редактора -->
@@ -152,11 +161,24 @@
                             <div class="post-content">
                                 {{ item.post.content|linebreaksbr }}
                                 {% if item.post.image %}
-                                    <div style="margin-top: 1rem;">
-                                        <img src="{{ item.post.image.url }}" alt="Изображение" style="max-width: 100%; border-radius: 8px;">
+                                    <div style="margin-top: 0.75rem;">
+                                        <img src="{{ item.post.image.url }}" alt="Изображение" style="max-width: 100%; border-radius: 8px; max-height: 400px; object-fit: cover;">
                                     </div>
                                 {% endif %}
                             </div>
+                            
+                            <!-- Самый популярный комментарий -->
+                            {% if item.top_comment %}
+                            <div class="top-comment-preview" style="margin-top: 0.75rem; padding: 0.75rem; background: var(--purple-lightest); border-radius: 10px; border-left: 3px solid var(--purple-primary);">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                    <strong style="font-size: 0.85rem;">
+                                        <a href="{% url 'user_profile' username=item.top_comment.author.username %}" style="color: var(--purple-primary); text-decoration: none;">{{ item.top_comment.author.username }}</a>:
+                                    </strong>
+                                </div>
+                                <p style="font-size: 0.9rem; color: var(--gray-700); margin: 0; line-height: 1.4;">{{ item.top_comment.content|truncatewords:30 }}</p>
+                            </div>
+                            {% endif %}
+                            
                             <div class="post-actions" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f3f4f6;">
                                 <form method="POST" style="display: inline;">
                                     {% csrf_token %}
@@ -165,32 +187,55 @@
                                         ❤️ {{ item.likes_count }}
                                     </button>
                                 </form>
-                                <span class="comment-btn">💬 {{ item.comments_count }}</span>
+                                <button type="button" class="comment-toggle-btn" data-post-id="group_{{ item.post.id }}">
+                                    💬 {{ item.comments_count }}
+                                </button>
                             </div>
-                            {% if item.comments_count > 0 %}
-                                <div class="comments-section" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f3f4f6;">
-                                    <h4 style="font-size: 0.9rem; color: #6b7280; margin-bottom: 0.5rem;">Комментарии:</h4>
-                                    {% for comment in item.comments %}
-                                    <div style="padding: 0.5rem; background: #f9fafb; border-radius: 8px; margin-bottom: 0.5rem;">
-                                        <strong style="font-size: 0.85rem;">{{ comment.author.username }}:</strong>
-                                        <span style="font-size: 0.85rem;">{{ comment.content }}</span>
-                                    </div>
-                                    {% endfor %}
-                                    <form method="POST" style="margin-top: 0.5rem;">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="comment_group_post" value="{{ item.post.id }}">
-                                        <input type="text" name="comment_text" placeholder="Написать комментарий..." style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem;">
-                                        <button type="submit" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #7C3AED; color: white; border: none; border-radius: 8px; cursor: pointer;">Отправить</button>
-                                    </form>
+                            
+                            <!-- Раскрывающийся раздел комментариев -->
+                            <div class="comments-section" id="comments-group_{{ item.post.id }}" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 2px solid var(--gray-100);">
+                                <h4 style="font-size: 1rem; color: var(--gray-700); margin-bottom: 1rem; font-weight: 700;">Комментарии ({{ item.comments_count }}):</h4>
+                                <div class="comments-list">
+                                    {% if item.comments %}
+                                        {% for comment_data in item.comments %}
+                                        <div class="comment-item">
+                                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                    <strong style="font-size: 0.9rem;">
+                                                        <a href="{% url 'user_profile' username=comment_data.comment.author.username %}" style="color: var(--purple-primary); text-decoration: none; font-weight: 700;">{{ comment_data.comment.author.username }}</a>
+                                                    </strong>
+                                                    <span style="font-size: 0.75rem; color: var(--gray-500);">{{ comment_data.comment.created|date:"d.m.Y H:i" }}</span>
+                                                </div>
+                                                {% if user.is_authenticated %}
+                                                <form method="POST" style="display: inline; margin: 0;">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="like_group_comment" value="{{ comment_data.comment.id }}">
+                                                    <button type="submit" class="like-btn" style="{% if comment_data.is_liked %}color: #ef4444;{% endif %} padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                                        ❤️ {{ comment_data.likes_count }}
+                                                    </button>
+                                                </form>
+                                                {% else %}
+                                                <span style="font-size: 0.8rem; color: var(--gray-500);">❤️ {{ comment_data.likes_count }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <p style="font-size: 0.9rem; color: var(--gray-700); margin: 0; line-height: 1.5;">{{ comment_data.comment.content|linebreaksbr }}</p>
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p style="color: var(--gray-500); font-style: italic; text-align: center; padding: 1rem;">Пока нет комментариев</p>
+                                    {% endif %}
                                 </div>
-                            {% else %}
-                                <form method="POST" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f3f4f6;">
+                                {% if user.is_authenticated %}
+                                <form method="POST" style="margin-top: 1rem;">
                                     {% csrf_token %}
                                     <input type="hidden" name="comment_group_post" value="{{ item.post.id }}">
-                                    <input type="text" name="comment_text" placeholder="Написать комментарий..." style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem;">
-                                    <button type="submit" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #7C3AED; color: white; border: none; border-radius: 8px; cursor: pointer;">Отправить</button>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <input type="text" name="comment_text" placeholder="Написать комментарий..." style="flex: 1; padding: 0.75rem; border: 2px solid var(--gray-200); border-radius: 10px; font-size: 0.9rem; font-family: 'Nunito', sans-serif;">
+                                        <button type="submit" style="padding: 0.75rem 1.5rem; background: var(--gradient-primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; font-family: 'Nunito', sans-serif; transition: all 0.3s ease;">Отправить</button>
+                                    </div>
                                 </form>
-                            {% endif %}
+                                {% endif %}
+                            </div>
                         </div>
                         {% endfor %}
                     {% else %}

@@ -217,3 +217,28 @@ class GroupPostComment(models.Model):
     def can_delete(self, user):
         """Проверяет, может ли пользователь удалить комментарий"""
         return self.author == user
+    
+    def get_likes_count(self):
+        """Получить количество лайков"""
+        return GroupPostCommentLike.objects.filter(comment=self).count()
+    
+    def is_liked_by(self, user):
+        """Проверить, лайкнул ли пользователь комментарий"""
+        if not user.is_authenticated:
+            return False
+        return GroupPostCommentLike.objects.filter(comment=self, user=user).exists()
+
+
+class GroupPostCommentLike(models.Model):
+    """Модель лайка комментария к посту группы"""
+    comment = models.ForeignKey(GroupPostComment, on_delete=models.CASCADE, related_name='likes', verbose_name='Комментарий')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_post_comment_likes', verbose_name='Пользователь')
+    created = models.DateTimeField(auto_now_add=True, verbose_name='Дата лайка')
+    
+    class Meta:
+        unique_together = ('comment', 'user')
+        verbose_name = 'Лайк комментария группы'
+        verbose_name_plural = 'Лайки комментариев групп'
+    
+    def __str__(self):
+        return f"{self.user.username} лайкнул комментарий группы {self.comment.id}"

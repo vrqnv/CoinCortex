@@ -6,6 +6,7 @@ urlpatterns = [
     path('create/', views.group_create, name='group_create'),
     path('<int:group_id>/', views.group_detail, name='group_detail'),
     path('<int:group_id>/subscribers/', views.group_subscribers, name='group_subscribers'),
+    path('<int:group_id>/delete/', views.group_delete, name='group_delete'),
     path('my/', views.my_groups, name='my_groups'),
 ]
 

@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% load static %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'style.css' %}">
     <title>{% block title %}CoinCortex{% endblock %}</title>
 </head>
@@ -46,6 +49,162 @@
     <footer>
         <p>CoinCortex 2025</p>
     </footer>
+
+    <script>
+        // Live Search для всех поисковых форм
+        document.addEventListener('DOMContentLoaded', function() {
+            // Находим все поисковые формы (включая формы с id search-form)
+            const searchForms = document.querySelectorAll('.search-form, form[id="search-form"]');
+            
+            searchForms.forEach(function(form) {
+                const searchInput = form.querySelector('.search-input');
+                const searchBtn = form.querySelector('.search-btn');
+                
+                if (searchInput) {
+                    let searchTimeout;
+                    let isSearching = false;
+                    
+                    // Функция для выполнения поиска
+                    function performSearch() {
+                        if (isSearching) return;
+                        isSearching = true;
+                        searchInput.classList.add('loading');
+                        
+                        // Сохраняем все параметры формы (select, hidden inputs и т.д.)
+                        const formData = new FormData(form);
+                        const params = new URLSearchParams(formData);
+                        
+                        // Отправляем запрос через fetch для более плавной работы
+                        const url = form.action || window.location.pathname;
+                        const fullUrl = url + (url.includes('?') ? '&' : '?') + params.toString();
+                        
+                        // Используем fetch для обновления страницы без полной перезагрузки
+                        fetch(fullUrl, {
+                            method: 'GET',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                            }
+                        }).then(function(response) {
+                            return response.text();
+                        }).then(function(html) {
+                            // Если это AJAX запрос, можно обновить только нужную часть
+                            // Но для простоты делаем полную перезагрузку
+                            window.location.href = fullUrl;
+                        }).catch(function(error) {
+                            // В случае ошибки просто отправляем форму обычным способом
+                            form.submit();
+                        });
+                        
+                        // Убираем индикатор загрузки через небольшую задержку
+                        setTimeout(function() {
+                            searchInput.classList.remove('loading');
+                            isSearching = false;
+                        }, 1000);
+                    }
+                    
+                    // Live search при вводе
+                    searchInput.addEventListener('input', function() {
+                        clearTimeout(searchTimeout);
+                        const query = this.value.trim();
+                        
+                        // Если запрос длиннее 2 символов или пустой, выполняем поиск
+                        if (query.length >= 2 || query.length === 0) {
+                            searchTimeout = setTimeout(function() {
+                                performSearch();
+                            }, 500); // Задержка 500мс для уменьшения количества запросов
+                        }
+                    });
+                    
+                    // Поиск при нажатии Enter
+                    searchInput.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            clearTimeout(searchTimeout);
+                            performSearch();
+                        }
+                    });
+                    
+                    // Поиск при клике на кнопку
+                    if (searchBtn) {
+                        searchBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            clearTimeout(searchTimeout);
+                            performSearch();
+                        });
+                    }
+                }
+            });
+            
+            // Отслеживание прокрутки для изменения цвета шапки
+            const header = document.querySelector('header');
+            const main = document.querySelector('main');
+            
+            function updateHeaderColor() {
+                if (!header || !main) return;
+                
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const headerHeight = header.offsetHeight;
+                
+                // Проверяем, есть ли белые карточки под шапкой
+                const cards = document.querySelectorAll('.profile-card, .posts-section, .welcome-card, .auth-card, .search-section, .chats-list, .post-card');
+                let hasWhiteCard = false;
+                
+                cards.forEach(function(card) {
+                    const rect = card.getBoundingClientRect();
+                    // Если карточка видна и находится в области шапки
+                    if (rect.top < headerHeight + 50 && rect.bottom > 0) {
+                        hasWhiteCard = true;
+                    }
+                });
+                
+                // Если прокрутили достаточно и есть белые карточки, меняем стиль
+                if (scrollTop > 50 && hasWhiteCard) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            }
+            
+            // Обновляем при прокрутке (с throttling для производительности)
+            let ticking = false;
+            window.addEventListener('scroll', function() {
+                if (!ticking) {
+                    window.requestAnimationFrame(function() {
+                        updateHeaderColor();
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            });
+            
+            // Обновляем при загрузке
+            updateHeaderColor();
+            // Обновляем при изменении размера окна
+            window.addEventListener('resize', updateHeaderColor);
+            // Обновляем при изменении DOM (для динамического контента)
+            const observer = new MutationObserver(updateHeaderColor);
+            if (main) {
+                observer.observe(main, { childList: true, subtree: true });
+            }
+            
+            // Раскрытие/скрытие комментариев
+            const commentToggleButtons = document.querySelectorAll('.comment-toggle-btn');
+            commentToggleButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const postId = this.getAttribute('data-post-id');
+                    const commentsSection = document.getElementById('comments-' + postId);
+                    if (commentsSection) {
+                        if (commentsSection.style.display === 'none') {
+                            commentsSection.style.display = 'block';
+                            commentsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        } else {
+                            commentsSection.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
 

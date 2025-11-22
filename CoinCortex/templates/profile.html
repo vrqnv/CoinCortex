@@ -144,9 +144,7 @@
                         <form method="POST" class="accept-friend-form">
                             {% csrf_token %}
                             <input type="hidden" name="accept_friend" value="{{ request.id }}">
-                            <button type="submit" class="accept-friend-btn" title="Принять заявку">
-                                ✓
-                            </button>
+                            <button type="submit" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem; text-decoration: none; border: none; cursor: pointer; white-space: nowrap;">Принять заявку</button>
                         </form>
                     </div>
                     {% endfor %}

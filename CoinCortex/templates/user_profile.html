@@ -116,12 +116,28 @@
                                     {% if item.comments_count > 0 %}
                                         <div class="comments-section" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f3f4f6;">
                                             <h4 style="font-size: 0.9rem; color: #6b7280; margin-bottom: 0.5rem;">Комментарии:</h4>
-                                            {% for comment in item.comments|slice:":3" %}
-                                            <div style="padding: 0.5rem; background: #f9fafb; border-radius: 8px; margin-bottom: 0.5rem;">
-                                                <strong style="font-size: 0.85rem;">
-                                                    <a href="{% url 'user_profile' username=comment.author.username %}" style="color: #7C3AED; text-decoration: none;">{{ comment.author.username }}</a>:
-                                                </strong>
-                                                <span style="font-size: 0.85rem;">{{ comment.content }}</span>
+                                            {% for comment_data in item.comments|slice:":3" %}
+                                            <div class="comment-item" style="padding: 0.5rem; background: #f9fafb; border-radius: 8px; margin-bottom: 0.5rem;">
+                                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                        <strong style="font-size: 0.85rem;">
+                                                            <a href="{% url 'user_profile' username=comment_data.comment.author.username %}" style="color: #7C3AED; text-decoration: none;">{{ comment_data.comment.author.username }}</a>:
+                                                        </strong>
+                                                        <span style="font-size: 0.75rem; color: #6b7280;">{{ comment_data.comment.created|date:"d.m.Y H:i" }}</span>
+                                                    </div>
+                                                    {% if user.is_authenticated %}
+                                                    <form method="POST" style="display: inline; margin: 0;">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="like_comment" value="{{ comment_data.comment.id }}">
+                                                        <button type="submit" class="like-btn" style="{% if comment_data.is_liked %}color: #ef4444;{% endif %} padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                                            ❤️ {{ comment_data.likes_count }}
+                                                        </button>
+                                                    </form>
+                                                    {% else %}
+                                                    <span style="font-size: 0.8rem; color: #6b7280;">❤️ {{ comment_data.likes_count }}</span>
+                                                    {% endif %}
+                                                </div>
+                                                <span style="font-size: 0.85rem;">{{ comment_data.comment.content|linebreaksbr }}</span>
                                             </div>
                                             {% endfor %}
                                             <form method="POST" style="margin-top: 0.5rem;">

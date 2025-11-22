@@ -6,20 +6,6 @@
 
 {% block content %}
         <div class="chat-detail-container">
-            <div class="chat-header">
-                <div class="chat-user-info">
-                    <div class="chat-avatar-large" style="{% if other_user.profile.avatar %}background-image: url('{{ other_user.profile.avatar.url }}'); background-size: cover;{% endif %}">
-                        {% if not other_user.profile.avatar %}{{ other_user.username|first|upper }}{% endif %}
-                    </div>
-                    <div>
-                        <h1>{{ other_user.username }}</h1>
-                        {% if other_user.profile.get_full_name != other_user.username %}
-                            <p style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin: 0;">{{ other_user.profile.get_full_name }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
             <div class="messages-container" id="messages-container">
                 {% for message in messages %}
                 <div class="message {% if message.sender == user %}message-sent{% else %}message-received{% endif %}">
