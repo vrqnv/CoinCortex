@@ -1,48 +1,10 @@
 <!-- templates/friends.html -->
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'style.css' %}">
-    <title>Друзья</title>
-</head>
-<body>
-    <header>
-        <nav>
-            <ul>
-                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
-                <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
-                <li class="nav-left"><a href="{% url 'groups_list' %}">Сообщества</a></li>
-                {% if user.is_authenticated %}
-                    <li class="nav-right"><a href="{% url 'notifications' %}">Уведомления</a></li>
-                    <li class="nav-right"><a href="{% url 'friends' %}">Друзья</a></li>
-                    <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
-                    <li class="nav-right">
-                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="logout-btn">Выйти</button>
-                        </form>
-                    </li>
-                {% else %}
-                    <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
-                    <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
-                {% endif %}
-            </ul>
-        </nav>
-    </header>
+{% extends "base.html" %}
+{% load static %}
 
-    <main>
-        {% if messages %}
-        <div class="messages-container">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
+{% block title %}Друзья{% endblock %}
+
+{% block content %}
 
         <div class="feed-container">
             <div class="feed-header">
@@ -109,6 +71,45 @@
             </div>
             {% endif %}
 
+            <!-- Возможные друзья -->
+            {% if possible_friends %}
+            <div class="posts-section" style="margin-bottom: 2rem;">
+                <h2>Возможные друзья</h2>
+                <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 1rem;">Пользователи с общими сообществами</p>
+                <div class="friends-list">
+                    {% for item in possible_friends %}
+                    <div class="friend-item">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div class="friend-avatar" style="{% if item.user.profile.avatar %}background-image: url('{{ item.user.profile.avatar.url }}'); background-size: cover;{% endif %}">
+                                {% if not item.user.profile.avatar %}{{ item.user.username|first|upper }}{% endif %}
+                            </div>
+                            <div style="flex: 1;">
+                                <a href="{% url 'user_profile' username=item.user.username %}" class="friend-username">
+                                    {{ item.user.username }}
+                                </a>
+                                <p style="font-size: 0.85rem; color: #6b7280; margin: 0.25rem 0 0 0;">
+                                    Общих сообществ: {{ item.common_groups_count }}
+                                </p>
+                                {% if item.common_groups %}
+                                <p style="font-size: 0.75rem; color: #9ca3af; margin: 0.25rem 0 0 0; font-style: italic;">
+                                    {% for group in item.common_groups %}
+                                        <a href="{% url 'group_detail' group_id=group.id %}" style="color: #7C3AED; text-decoration: none;">{{ group.name }}</a>{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <form method="POST" class="add-friend-form" style="margin-top: 0.5rem;">
+                            {% csrf_token %}
+                            <input type="hidden" name="add_friend" value="{{ item.user.username }}">
+                            <button type="submit" class="btn-primary" style="padding: 0.5rem 1rem; background: #7C3AED; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">Добавить в друзья</button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Список друзей -->
             <div class="posts-section">
                 <h2>Мои друзья</h2>
@@ -140,11 +141,5 @@
                 </div>
             </div>
         </div>
-    </main>
-
-    <footer>
-        <p>CoinCortex 2025</p>
-    </footer>
-</body>
-</html>
+{% endblock %}
 

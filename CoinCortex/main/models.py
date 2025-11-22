@@ -190,7 +190,9 @@ class Message(models.Model):
 # Добавляем метод к User для удобства
 def get_or_create_chat(self, other_user):
     """Получить или создать чат с другим пользователем"""
-    chat = Chat.objects.filter(participants=self).filter(participants=other_user).first()
+    # Ищем чат, где оба пользователя являются участниками
+    chats = Chat.objects.filter(participants=self).filter(participants=other_user)
+    chat = chats.first()
     if not chat:
         chat = Chat.objects.create()
         chat.participants.add(self, other_user)

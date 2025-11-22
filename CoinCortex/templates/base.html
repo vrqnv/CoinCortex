@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>{% block title %}CoinCortex{% endblock %}</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
+                {% if user.is_authenticated %}
+                    <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
+                    <li class="nav-left"><a href="{% url 'groups_list' %}">Сообщества</a></li>
+                    <li class="nav-center"><a href="{% url 'index' %}"><img src="{% static 'logo.png' %}" alt="Logo" style="height: 40px; width: auto;"></a></li>
+                    <li class="nav-right"><a href="{% url 'notifications' %}">Уведомления{% if unread_notifications %}<span style="background: #ef4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.8rem; margin-left: 5px;">{{ unread_notifications }}</span>{% endif %}</a></li>
+                    <li class="nav-right"><a href="{% url 'friends' %}">Друзья</a></li>
+                    <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
+                {% else %}
+                    <li class="nav-center"><a href="{% url 'index' %}"><img src="{% static 'logo.png' %}" alt="Logo" style="height: 40px; width: auto;"></a></li>
+                    <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
+                    <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <p>CoinCortex 2025</p>
+    </footer>
+</body>
+</html>
+

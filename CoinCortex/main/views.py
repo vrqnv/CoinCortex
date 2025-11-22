@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Count
 from .models import (
     Post,
     PostLike,
@@ -19,11 +19,214 @@ from .forms import CustomUserCreationForm
 
 
 def index(request):
-    """Главная страница с лентой постов от сообществ"""
-    # Получаем последние посты (можно позже фильтровать по сообществам)
-    community_posts = Post.objects.all().order_by("-created")[:20]
+    """Главная страница с лентой постов от популярных групп"""
+    # Обработка POST запросов (лайки и комментарии)
+    if request.method == "POST" and request.user.is_authenticated:
+        # Лайк поста
+        if "like_post" in request.POST:
+            post_id = request.POST.get("like_post")
+            try:
+                if post_id.startswith("group_"):
+                    # Лайк поста группы
+                    from groups.models import GroupPost, GroupPostLike
 
-    return render(request, "index.html", {"community_posts": community_posts})
+                    post_id = post_id.replace("group_", "")
+                    post = GroupPost.objects.get(id=post_id)
+                    like, created = GroupPostLike.objects.get_or_create(
+                        post=post, user=request.user
+                    )
+                    if not created:
+                        like.delete()
+                        messages.info(request, "Лайк убран")
+                    else:
+                        if post.author != request.user:
+                            Notification.objects.create(
+                                user=post.author,
+                                notification_type="group_like",
+                                from_user=request.user,
+                                group_post=post,
+                            )
+                        messages.success(request, "Лайк поставлен")
+                else:
+                    # Лайк обычного поста
+                    post = Post.objects.get(id=post_id)
+                    like, created = PostLike.objects.get_or_create(
+                        post=post, user=request.user
+                    )
+                    if not created:
+                        like.delete()
+                        messages.info(request, "Лайк убран")
+                    else:
+                        if post.author != request.user:
+                            Notification.objects.create(
+                                user=post.author,
+                                notification_type="like",
+                                from_user=request.user,
+                                post=post,
+                            )
+                        messages.success(request, "Лайк поставлен")
+            except (Post.DoesNotExist, Exception):
+                messages.error(request, "Пост не найден")
+            return redirect("index")
+
+        # Комментарий к посту
+        elif "comment_post" in request.POST:
+            post_id = request.POST.get("comment_post")
+            comment_text = request.POST.get("comment_text", "").strip()
+            if comment_text:
+                try:
+                    if post_id.startswith("group_"):
+                        # Комментарий к посту группы
+                        from groups.models import GroupPost, GroupPostComment
+
+                        post_id = post_id.replace("group_", "")
+                        post = GroupPost.objects.get(id=post_id)
+                        GroupPostComment.objects.create(
+                            post=post, author=request.user, content=comment_text
+                        )
+                        if post.author != request.user:
+                            Notification.objects.create(
+                                user=post.author,
+                                notification_type="group_comment",
+                                from_user=request.user,
+                                group_post=post,
+                            )
+                        messages.success(request, "Комментарий добавлен")
+                    else:
+                        # Комментарий к обычному посту
+                        post = Post.objects.get(id=post_id)
+                        PostComment.objects.create(
+                            post=post, author=request.user, content=comment_text
+                        )
+                        if post.author != request.user:
+                            Notification.objects.create(
+                                user=post.author,
+                                notification_type="comment",
+                                from_user=request.user,
+                                post=post,
+                            )
+                        messages.success(request, "Комментарий добавлен")
+                except (Post.DoesNotExist, Exception):
+                    messages.error(request, "Пост не найден")
+            return redirect("index")
+
+    # Получаем посты для авторизованных пользователей
+    all_posts = []
+
+    if request.user.is_authenticated:
+        from groups.models import Group, GroupPost, GroupSubscription
+
+        # Получаем друзей пользователя
+        sent_friends = User.objects.filter(
+            friendship_requests_received__from_user=request.user,
+            friendship_requests_received__accepted=True,
+        )
+        received_friends = User.objects.filter(
+            friendship_requests_sent__to_user=request.user,
+            friendship_requests_sent__accepted=True,
+        )
+        friends_list = list(sent_friends.union(received_friends))
+        friends_ids = [f.id for f in friends_list]
+
+        # Получаем ID сообществ, на которые подписан пользователь
+        subscribed_groups = GroupSubscription.objects.filter(
+            user=request.user, is_subscribed=True
+        ).values_list("group_id", flat=True)
+
+        # Получаем посты от друзей
+        friends_posts = (
+            Post.objects.filter(
+                Q(author__in=friends_ids) | Q(wall_owner__in=friends_ids)
+            )
+            .select_related("author", "wall_owner")
+            .order_by("-created")
+        )
+
+        # Получаем посты из подписанных сообществ
+        group_posts = (
+            GroupPost.objects.filter(group_id__in=subscribed_groups)
+            .select_related("group", "author")
+            .order_by("-created")
+        )
+
+        # Добавляем посты друзей
+        for post in friends_posts:
+            is_liked = post.is_liked_by(request.user)
+            all_posts.append(
+                {
+                    "post": post,
+                    "type": "user",
+                    "is_liked": is_liked,
+                    "likes_count": post.get_likes_count(),
+                    "comments_count": post.get_comments_count(),
+                    "comments": post.comments.select_related("author").all()[:5],
+                }
+            )
+
+        # Добавляем посты из групп
+        for post in group_posts:
+            is_liked = post.is_liked_by(request.user)
+            all_posts.append(
+                {
+                    "post": post,
+                    "type": "group",
+                    "is_liked": is_liked,
+                    "likes_count": post.get_likes_count(),
+                    "comments_count": post.get_comments_count(),
+                    "comments": post.comments.select_related("author").all()[:5],
+                }
+            )
+    else:
+        # Для неавторизованных - показываем посты из популярных групп
+        from groups.models import Group, GroupPost
+
+        popular_groups = (
+            Group.objects.annotate(
+                subscribers_count=Count(
+                    "subscriptions", filter=Q(subscriptions__is_subscribed=True)
+                )
+            )
+            .filter(subscribers_count__gt=0)
+            .order_by("-subscribers_count", "-created")[:10]
+        )
+
+        group_posts = (
+            GroupPost.objects.filter(group__in=popular_groups)
+            .select_related("group", "author")
+            .order_by("-created")
+        )
+
+        for post in group_posts:
+            all_posts.append(
+                {
+                    "post": post,
+                    "type": "group",
+                    "is_liked": False,
+                    "likes_count": post.get_likes_count(),
+                    "comments_count": post.get_comments_count(),
+                    "comments": post.comments.select_related("author").all()[:5],
+                }
+            )
+
+    # Сортируем по дате создания (новые сначала)
+    all_posts.sort(key=lambda x: x["post"].created, reverse=True)
+    all_posts = all_posts[:50]
+
+    # Получаем количество непрочитанных уведомлений
+    unread_notifications = 0
+    if request.user.is_authenticated:
+        unread_notifications = Notification.objects.filter(
+            user=request.user, read=False
+        ).count()
+
+    return render(
+        request,
+        "index.html",
+        {
+            "all_posts": all_posts,
+            "unread_notifications": unread_notifications,
+        },
+    )
 
 
 @login_required
@@ -344,6 +547,69 @@ def user_profile(request, username):
         if profile_user == request.user:
             return redirect("profile")
 
+        # Обработка POST запросов
+        if request.method == "POST":
+            # Создание поста на стене друга
+            if "content" in request.POST:
+                content = request.POST.get("content", "").strip()
+                if content:
+                    post = Post.objects.create(
+                        author=request.user,
+                        content=content,
+                        wall_owner=profile_user,  # Пост на стене друга
+                    )
+                    if "image" in request.FILES:
+                        post.image = request.FILES["image"]
+                        post.save()
+                    messages.success(request, "Пост опубликован!")
+                    return redirect("user_profile", username=username)
+
+            # Лайк поста
+            elif "like_post" in request.POST:
+                post_id = request.POST.get("like_post")
+                try:
+                    post = Post.objects.get(id=post_id)
+                    like, created = PostLike.objects.get_or_create(
+                        post=post, user=request.user
+                    )
+                    if not created:
+                        like.delete()
+                        messages.info(request, "Лайк убран")
+                    else:
+                        if post.author != request.user:
+                            Notification.objects.create(
+                                user=post.author,
+                                notification_type="like",
+                                from_user=request.user,
+                                post=post,
+                            )
+                        messages.success(request, "Лайк поставлен")
+                except Post.DoesNotExist:
+                    messages.error(request, "Пост не найден")
+                return redirect("user_profile", username=username)
+
+            # Комментарий к посту
+            elif "comment_post" in request.POST:
+                post_id = request.POST.get("comment_post")
+                comment_text = request.POST.get("comment_text", "").strip()
+                if comment_text:
+                    try:
+                        post = Post.objects.get(id=post_id)
+                        PostComment.objects.create(
+                            post=post, author=request.user, content=comment_text
+                        )
+                        if post.author != request.user:
+                            Notification.objects.create(
+                                user=post.author,
+                                notification_type="comment",
+                                from_user=request.user,
+                                post=post,
+                            )
+                        messages.success(request, "Комментарий добавлен")
+                    except Post.DoesNotExist:
+                        messages.error(request, "Пост не найден")
+                return redirect("user_profile", username=username)
+
         # Проверяем, является ли пользователь другом
         is_friend = Friendship.objects.filter(
             (
@@ -353,12 +619,25 @@ def user_profile(request, username):
             accepted=True,
         ).exists()
 
-        # Получаем посты пользователя с оптимизацией
+        # Получаем посты на стене пользователя (все посты, где wall_owner = profile_user)
         user_posts = (
-            Post.objects.filter(author=profile_user)
+            Post.objects.filter(wall_owner=profile_user)
             .select_related("author", "wall_owner")
-            .order_by("-created")[:10]
+            .order_by("-created")[:20]
         )
+
+        # Добавляем информацию о лайках и комментариях
+        posts_with_info = []
+        for post in user_posts:
+            posts_with_info.append(
+                {
+                    "post": post,
+                    "is_liked": post.is_liked_by(request.user),
+                    "likes_count": post.get_likes_count(),
+                    "comments_count": post.get_comments_count(),
+                    "comments": post.comments.select_related("author").all()[:5],
+                }
+            )
 
         # Проверяем, отправил ли текущий пользователь заявку в друзья
         friend_request_sent = Friendship.objects.filter(
@@ -372,7 +651,7 @@ def user_profile(request, username):
 
         context = {
             "profile_user": profile_user,
-            "posts": user_posts,
+            "posts": posts_with_info,
             "is_friend": is_friend,
             "friend_request_sent": friend_request_sent,
             "incoming_request": incoming_request,
@@ -469,18 +748,28 @@ def chat_detail(request, chat_id):
 
 @login_required
 def start_chat(request, username):
-    """Начать новый чат с пользователем"""
+    """Начать новый чат с пользователем по нику"""
     try:
-        other_user = User.objects.get(username=username)
+        # Ищем пользователя по нику (точное совпадение или частичное)
+        other_user = User.objects.filter(username__iexact=username).first()
+        if not other_user:
+            # Если точного совпадения нет, ищем частичное
+            other_user = User.objects.filter(username__icontains=username).first()
+
+        if not other_user:
+            messages.error(request, f"Пользователь '{username}' не найден")
+            return redirect("chat")
+
         if other_user == request.user:
             messages.error(request, "Нельзя начать чат с собой")
             return redirect("chat")
 
+        # Получаем или создаем чат
         chat = request.user.get_or_create_chat(other_user)
         return redirect("chat_detail", chat_id=chat.id)
 
-    except User.DoesNotExist:
-        messages.error(request, "Пользователь не найден")
+    except Exception as e:
+        messages.error(request, f"Ошибка при создании чата: {str(e)}")
         return redirect("chat")
 
 
@@ -520,6 +809,81 @@ def delete_account(request):
 @login_required
 def friends_page(request):
     """Страница со списком друзей"""
+    # Обработка POST запросов
+    if request.method == "POST":
+        # Добавление в друзья
+        if "add_friend" in request.POST:
+            username = request.POST.get("add_friend")
+            try:
+                friend_user = User.objects.get(username=username)
+                if friend_user == request.user:
+                    messages.error(request, "Нельзя добавить себя в друзья")
+                else:
+                    existing_friendship = Friendship.objects.filter(
+                        Q(from_user=request.user, to_user=friend_user)
+                        | Q(from_user=friend_user, to_user=request.user)
+                    ).first()
+
+                    if existing_friendship:
+                        if existing_friendship.accepted:
+                            messages.info(
+                                request, f"Вы уже друзья с {friend_user.username}"
+                            )
+                        else:
+                            if existing_friendship.from_user == request.user:
+                                messages.info(
+                                    request,
+                                    f"Вы уже отправили заявку {friend_user.username}",
+                                )
+                            else:
+                                existing_friendship.accepted = True
+                                existing_friendship.save()
+                                messages.success(
+                                    request,
+                                    f"Вы приняли заявку от {friend_user.username}",
+                                )
+                    else:
+                        Friendship.objects.create(
+                            from_user=request.user, to_user=friend_user, accepted=False
+                        )
+                        messages.success(
+                            request, f"Заявка отправлена {friend_user.username}"
+                        )
+            except User.DoesNotExist:
+                messages.error(request, "Пользователь не найден")
+            return redirect("friends")
+
+        # Принятие заявки
+        elif "accept_friend" in request.POST:
+            friend_id = request.POST.get("accept_friend")
+            try:
+                friendship = Friendship.objects.get(
+                    id=friend_id, to_user=request.user, accepted=False
+                )
+                friendship.accepted = True
+                friendship.save()
+                messages.success(
+                    request, f"Вы приняли заявку от {friendship.from_user.username}"
+                )
+            except Friendship.DoesNotExist:
+                messages.error(request, "Заявка не найдена")
+            return redirect("friends")
+
+        # Удаление друга
+        elif "remove_friend" in request.POST:
+            username = request.POST.get("remove_friend")
+            try:
+                friend_user = User.objects.get(username=username)
+                Friendship.objects.filter(
+                    Q(from_user=request.user, to_user=friend_user)
+                    | Q(from_user=friend_user, to_user=request.user),
+                    accepted=True,
+                ).delete()
+                messages.success(request, f"{friend_user.username} удален из друзей")
+            except User.DoesNotExist:
+                messages.error(request, "Пользователь не найден")
+            return redirect("friends")
+
     # Получаем всех друзей
     sent_friends = User.objects.filter(
         friendship_requests_received__from_user=request.user,
@@ -530,6 +894,7 @@ def friends_page(request):
         friendship_requests_sent__accepted=True,
     ).select_related("profile")
     friends_list = list(sent_friends.union(received_friends))
+    friends_ids = [f.id for f in friends_list]
 
     # Получаем входящие заявки
     incoming_requests = Friendship.objects.filter(
@@ -541,6 +906,78 @@ def friends_page(request):
         from_user=request.user, accepted=False
     ).select_related("to_user")
 
+    # Получаем ID всех пользователей с заявками
+    pending_ids = set()
+    for req in incoming_requests:
+        pending_ids.add(req.from_user.id)
+    for req in outgoing_requests:
+        pending_ids.add(req.to_user.id)
+
+    # Получаем возможных друзей на основе общих сообществ
+    from groups.models import GroupSubscription, Group
+
+    # Получаем ID сообществ, на которые подписан текущий пользователь
+    user_subscribed_groups = GroupSubscription.objects.filter(
+        user=request.user, is_subscribed=True
+    ).values_list("group_id", flat=True)
+
+    possible_friends = []
+    if user_subscribed_groups:
+        # Получаем пользователей, которые подписаны на те же сообщества
+        recommended_users = (
+            User.objects.filter(
+                group_subscriptions__group_id__in=user_subscribed_groups,
+                group_subscriptions__is_subscribed=True,
+            )
+            .exclude(id=request.user.id)
+            .exclude(id__in=friends_ids)
+            .exclude(id__in=pending_ids)
+            .annotate(
+                common_groups_count=Count(
+                    "group_subscriptions",
+                    filter=Q(
+                        group_subscriptions__group_id__in=user_subscribed_groups,
+                        group_subscriptions__is_subscribed=True,
+                    ),
+                )
+            )
+            .filter(common_groups_count__gt=0)
+            .select_related("profile")
+            .order_by("-common_groups_count", "-date_joined")[:20]
+        )
+
+        # Преобразуем в список с информацией о количестве общих сообществ и их названиях
+        for user in recommended_users:
+            # Получаем общие сообщества
+            user_groups = GroupSubscription.objects.filter(
+                user=user, is_subscribed=True, group_id__in=user_subscribed_groups
+            ).values_list("group_id", flat=True)
+            common_groups = Group.objects.filter(id__in=user_groups)
+
+            possible_friends.append(
+                {
+                    "user": user,
+                    "common_groups_count": user.common_groups_count,
+                    "common_groups": common_groups,
+                }
+            )
+
+    # Поиск пользователей
+    search_query = request.GET.get("search", "").strip()
+    search_results = []
+    if search_query:
+        search_results = (
+            User.objects.filter(username__icontains=search_query)
+            .exclude(id=request.user.id)
+            .distinct()
+            .select_related("profile")[:10]
+        )
+
+    # Получаем количество непрочитанных уведомлений
+    unread_notifications = Notification.objects.filter(
+        user=request.user, read=False
+    ).count()
+
     return render(
         request,
         "friends.html",
@@ -548,6 +985,10 @@ def friends_page(request):
             "friends": friends_list,
             "incoming_requests": incoming_requests,
             "outgoing_requests": outgoing_requests,
+            "possible_friends": possible_friends,
+            "search_results": search_results,
+            "search_query": search_query,
+            "unread_notifications": unread_notifications,
         },
     )
 

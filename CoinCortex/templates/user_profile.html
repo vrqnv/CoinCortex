@@ -1,49 +1,10 @@
 <!-- templates/user_profile.html -->
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'style.css' %}">
-    <title>Профиль - {{ profile_user.username }}</title>
-</head>
-<body>
-    <header>
-        <nav>
-            <ul>
-                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
-                <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
-                <li class="nav-left"><a href="{% url 'groups_list' %}">Сообщества</a></li>
-                {% if user.is_authenticated %}
-                    <li class="nav-right"><a href="{% url 'notifications' %}">Уведомления</a></li>
-                    <li class="nav-right"><a href="{% url 'friends' %}">Друзья</a></li>
-                    <li class="nav-right"><a href="{% url 'profile' %}">Мой профиль</a></li>
-                    <li class="nav-right">
-                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="logout-btn">Выйти</button>
-                        </form>
-                    </li>
-                {% else %}
-                    <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
-                    <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
-                {% endif %}
-            </ul>
-        </nav>
-    </header>
+{% extends "base.html" %}
+{% load static %}
 
-    <main>
-        <!-- Сообщения -->
-        {% if messages %}
-        <div class="messages-container">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
+{% block title %}Профиль - {{ profile_user.username }}{% endblock %}
+
+{% block content %}
 
         <div class="profile-layout">
             <!-- Левая колонка - профиль и посты -->
@@ -99,30 +60,91 @@
                     </div>
                 </div>
 
+                <!-- Форма создания поста на стене друга -->
+                {% if is_friend %}
+                <div class="create-post-section" style="margin-bottom: 2rem; padding: 1.5rem; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+                    <h3 style="margin-bottom: 1rem; color: #1f2937; font-size: 1.25rem;">Написать на стене {{ profile_user.username }}</h3>
+                    <form method="POST" enctype="multipart/form-data" class="post-form">
+                        {% csrf_token %}
+                        <textarea name="content" placeholder="Что у вас нового?" rows="4" style="width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 8px; font-family: inherit; resize: vertical; font-size: 0.95rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='#7C3AED';" onblur="this.style.borderColor='#e5e7eb';"></textarea>
+                        <div style="margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <label for="image-upload" style="cursor: pointer; padding: 0.5rem 1rem; background: #f3f4f6; border-radius: 8px; font-size: 0.9rem; color: #6b7280; transition: background-color 0.2s;" onmouseover="this.style.background='#e5e7eb';" onmouseout="this.style.background='#f3f4f6';">
+                                📷 Выбрать изображение
+                            </label>
+                            <input type="file" id="image-upload" name="image" accept="image/*" style="display: none;" onchange="if(this.value) { this.previousElementSibling.textContent = '📷 ' + this.files[0].name; }">
+                        </div>
+                        <button type="submit" class="btn-primary" style="margin-top: 1rem; padding: 0.75rem 2rem; background: #7C3AED; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 500; transition: background-color 0.2s;" onmouseover="this.style.background='#6d28d9';" onmouseout="this.style.background='#7C3AED';">
+                            Опубликовать
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+
                 <!-- Блок постов пользователя -->
                 <div class="posts-section">
-                    <h2>Посты {{ profile_user.username }}</h2>
+                    <h2>Посты на стене {{ profile_user.username }}</h2>
                     <div class="posts-list">
                         {% if posts %}
-                            {% for post in posts %}
+                            {% for item in posts %}
                             <div class="post-card">
                                 <div class="post-header">
                                     <div class="post-author">
                                         <div class="post-avatar">
-                                            {{ post.author.username|first|upper }}
+                                            {{ item.post.author.username|first|upper }}
                                         </div>
-                                        <strong>{{ post.author.username }}</strong>
+                                        <strong><a href="{% url 'user_profile' username=item.post.author.username %}" style="color: #1f2937; text-decoration: none;">{{ item.post.author.username }}</a></strong>
                                     </div>
-                                    <span class="post-date">{{ post.created|date:"d.m.Y H:i" }}</span>
+                                    <span class="post-date">{{ item.post.created|date:"d.m.Y H:i" }}</span>
                                 </div>
                                 <div class="post-content">
-                                    {{ post.content|linebreaksbr }}
+                                    {{ item.post.content|linebreaksbr }}
+                                    {% if item.post.image %}
+                                        <div style="margin-top: 1rem;">
+                                            <img src="{{ item.post.image.url }}" alt="Изображение" style="max-width: 100%; border-radius: 8px;">
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="post-actions">
+                                    <form method="POST" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="like_post" value="{{ item.post.id }}">
+                                        <button type="submit" class="like-btn" style="{% if item.is_liked %}color: #ef4444;{% endif %}">
+                                            ❤️ {{ item.likes_count }}
+                                        </button>
+                                    </form>
+                                    <span class="comment-btn">💬 {{ item.comments_count }}</span>
+                                    {% if item.comments_count > 0 %}
+                                        <div class="comments-section" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f3f4f6;">
+                                            <h4 style="font-size: 0.9rem; color: #6b7280; margin-bottom: 0.5rem;">Комментарии:</h4>
+                                            {% for comment in item.comments|slice:":3" %}
+                                            <div style="padding: 0.5rem; background: #f9fafb; border-radius: 8px; margin-bottom: 0.5rem;">
+                                                <strong style="font-size: 0.85rem;">
+                                                    <a href="{% url 'user_profile' username=comment.author.username %}" style="color: #7C3AED; text-decoration: none;">{{ comment.author.username }}</a>:
+                                                </strong>
+                                                <span style="font-size: 0.85rem;">{{ comment.content }}</span>
+                                            </div>
+                                            {% endfor %}
+                                            <form method="POST" style="margin-top: 0.5rem;">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="comment_post" value="{{ item.post.id }}">
+                                                <input type="text" name="comment_text" placeholder="Написать комментарий..." style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem;">
+                                                <button type="submit" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #7C3AED; color: white; border: none; border-radius: 8px; cursor: pointer;">Отправить</button>
+                                            </form>
+                                        </div>
+                                    {% else %}
+                                        <form method="POST" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f3f4f6;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="comment_post" value="{{ item.post.id }}">
+                                            <input type="text" name="comment_text" placeholder="Написать комментарий..." style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem;">
+                                            <button type="submit" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #7C3AED; color: white; border: none; border-radius: 8px; cursor: pointer;">Отправить</button>
+                                        </form>
+                                    {% endif %}
                                 </div>
                             </div>
                             {% endfor %}
                         {% else %}
                             <div class="no-posts">
-                                <p>{{ profile_user.username }} пока не опубликовал постов</p>
+                                <p>На стене {{ profile_user.username }} пока нет постов</p>
                             </div>
                         {% endif %}
                     </div>
@@ -145,10 +167,4 @@
                 </div>
             </div>
         </div>
-    </main>
-
-    <footer>
-        <p>CoinCortex 2025</p>
-    </footer>
-</body>
-</html>
+{% endblock %}

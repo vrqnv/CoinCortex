@@ -1,39 +1,10 @@
 <!-- templates/index.html -->
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'style.css' %}">
-    <title>{% block title %}Главная{% endblock %}</title>
-</head>
-<body>
-    <header>
-        <nav>
-            <ul>
-                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
-                <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
-                {% if user.is_authenticated %}
-                    <li class="nav-right"><a href="{% url 'notifications' %}">Уведомления{% if unread_notifications %}<span style="background: #ef4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.8rem; margin-left: 5px;">{{ unread_notifications }}</span>{% endif %}</a></li>
-                    <li class="nav-right"><a href="{% url 'chat' %}">Чаты{% if total_unread %}<span style="background: #ef4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.8rem; margin-left: 5px;">{{ total_unread }}</span>{% endif %}</a></li>
-                    <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
-                    <li class="nav-right">
-                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="logout-btn">Выйти</button>
-                        </form>
-                    </li>
-                {% else %}
-                    <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
-                    <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
-                {% endif %}
-            </ul>
-        </nav>
-    </header>
+{% extends "base.html" %}
+{% load static %}
 
-    <main>
-        {% block content %}
+{% block title %}Главная{% endblock %}
+
+{% block content %}
         <!-- Контент главной страницы -->
         {% if not user.is_authenticated %}
         <div class="welcome-section">
@@ -47,11 +18,11 @@
             </div>
         </div>
         {% else %}
-        <!-- Лента постов для авторизованных пользователей -->
+        <!-- Лента постов -->
         <div class="feed-container">
             <div class="feed-header">
-                <h1>{% if show_popular %}Популярные посты{% else %}Лента новостей{% endif %}</h1>
-                <p>{% if show_popular %}Самые популярные посты от пользователей и сообществ{% else %}Последние посты от сообществ и друзей{% endif %}</p>
+                <h1>Популярные посты</h1>
+                <p>Посты из наиболее популярных групп и ваши посты</p>
             </div>
 
             <div class="posts-feed">
@@ -112,7 +83,9 @@
                                     <h4 style="font-size: 0.9rem; color: #6b7280; margin-bottom: 0.5rem;">Комментарии:</h4>
                                     {% for comment in item.comments|slice:":3" %}
                                     <div style="padding: 0.5rem; background: #f9fafb; border-radius: 8px; margin-bottom: 0.5rem;">
-                                        <strong style="font-size: 0.85rem;">{{ comment.author.username }}:</strong>
+                                        <strong style="font-size: 0.85rem;">
+                                            <a href="{% url 'user_profile' username=comment.author.username %}" style="color: #7C3AED; text-decoration: none;">{{ comment.author.username }}</a>:
+                                        </strong>
                                         <span style="font-size: 0.85rem;">{{ comment.content }}</span>
                                     </div>
                                     {% endfor %}
@@ -145,10 +118,4 @@
             </div>
         </div>
         {% endif %}
-        {% endblock %}
-    </main>
-    <footer>
-        <p>CoinCortex 2025</p>
-    </footer>
-</body>
-</html>
+{% endblock %}
