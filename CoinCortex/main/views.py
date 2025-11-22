@@ -7,17 +7,37 @@ from django.contrib import messages
 from .models import Post, Friendship, UserRating
 from django.db.models import Q
 from .models import Post, User, Friendship, Chat, Message
+from .models import Community, Post
 
 
 def index(request):
-    """Главная страница с лентой постов от сообществ"""
-    # Получаем последние посты (можно позже фильтровать по сообществам)
-    community_posts = Post.objects.all().order_by('-created')[:20]
+    if request.user.is_authenticated:
+        try:
+            # Получаем посты, которые принадлежат сообществам
+            community_posts = Post.objects.filter(community__isnull=False).select_related('author', 'community').order_by('-created')[:10]
+            
+            # Получаем сообщества пользователя
+            user_communities = []
+            if hasattr(request.user, 'joined_communities'):
+                user_communities = request.user.joined_communities.all()[:5]
+            
+            context = {
+                'community_posts': community_posts,
+                'user_communities': user_communities,
+            }
+        except Exception as e:
+            # Если возникла ошибка, показываем посты без фильтрации по сообществам
+            community_posts = Post.objects.all().select_related('author').order_by('-created')[:10]
+            user_communities = []
+            context = {
+                'community_posts': community_posts,
+                'user_communities': user_communities,
+            }
+        
+        return render(request, 'index.html', context)
+    else:
+        return render(request, 'index.html')
     
-    return render(request, 'index.html', {
-        'community_posts': community_posts
-    })
-
 @login_required
 def chat(request):
     return render(request, 'chat.html')
@@ -361,3 +381,55 @@ def start_chat(request, username):
     except User.DoesNotExist:
         messages.error(request, 'Пользователь не найден')
         return redirect('chat')
+    
+def communities(request):
+    """Страница со списком всех сообществ"""
+    communities_list = Community.objects.all()
+    user_communities = []
+    
+    if request.user.is_authenticated:
+        user_communities = request.user.joined_communities.all()
+    
+    context = {
+        'communities': communities_list,
+        'user_communities': user_communities,
+    }
+    return render(request, 'communities/communities.html', context)
+
+def community_detail(request, community_id):
+    """Детальная страница сообщества"""
+    community = get_object_or_404(Community, id=community_id)
+    is_member = False
+    
+    if request.user.is_authenticated:
+        is_member = request.user.joined_communities.filter(id=community_id).exists()
+    
+    context = {
+        'community': community,
+        'is_member': is_member,
+        'members_count': community.members.count()
+    }
+    return render(request, 'communities/community_detail.html', context)
+
+@login_required
+def join_community(request, community_id):
+    """Вступление в сообщество (AJAX)"""
+    community = get_object_or_404(Community, id=community_id)
+    
+    if request.method == 'POST':
+        if community.members.filter(id=request.user.id).exists():
+            # Выход из сообщества
+            community.members.remove(request.user)
+            joined = False
+        else:
+            # Вступление в сообщество
+            community.members.add(request.user)
+            joined = True
+        
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'joined': joined,
+                'members_count': community.members.count()
+            })
+    
+    return redirect('community_detail', community_id=community_id)

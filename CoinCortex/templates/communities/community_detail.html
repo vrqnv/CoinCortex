@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>{{ community.name }} - CoinCortex</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
+                <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
+                {% if user.is_authenticated %}
+                    <li class="nav-left"><a href="{% url 'communities' %}">Сообщества</a></li>
+                {% endif %}
+                
+                {% if user.is_authenticated %}
+                    <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
+                    <li class="nav-right">
+                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">Выйти</button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
+                    <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="community-detail">
+            <div class="community-header">
+                <div class="community-avatar large">
+                    {% if community.avatar %}
+                        <img src="{{ community.avatar.url }}" alt="{{ community.name }}">
+                    {% else %}
+                        <div class="avatar-placeholder large">{{ community.name|first|upper }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="community-meta">
+                    <h1>{{ community.name }}</h1>
+                    <p class="community-description">{{ community.description }}</p>
+                    
+                    <div class="community-actions">
+                        {% if user.is_authenticated %}
+                            {% if is_member %}
+                                <button class="btn btn-outline leave-btn" 
+                                        data-community-id="{{ community.id }}">
+                                    ✅ Вы участник
+                                </button>
+                            {% else %}
+                                <button class="btn btn-primary join-btn" 
+                                        data-community-id="{{ community.id }}">
+                                    Присоединиться к сообществу
+                                </button>
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'login' %}" class="btn btn-primary">Войти для участия</a>
+                        {% endif %}
+                        
+                        <span class="members-count">👥 {{ members_count }} участников</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="community-content">
+                <div class="community-posts">
+                    <h3>Последние обсуждения</h3>
+                    {% if community.posts.all %}
+                        {% for post in community.posts.all %}
+                        <div class="post-card">
+                            <div class="post-header">
+                                <div class="post-author">
+                                    <div class="post-avatar">
+                                        {{ post.author.username|first|upper }}
+                                    </div>
+                                    <div class="author-info">
+                                        <strong>{{ post.author.username }}</strong>
+                                        <span class="post-date">{{ post.created|date:"d.m.Y H:i" }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="post-content">
+                                {{ post.content|linebreaksbr }}
+                            </div>
+                            <div class="post-actions">
+                                <button class="like-btn">❤️</button>
+                                <button class="comment-btn">💬</button>
+                                <button class="share-btn">↗️</button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <p>Пока нет обсуждений в этом сообществе.</p>
+                            <p>Будьте первым, кто поделится новостью!</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="community-sidebar">
+                    <div class="sidebar-section">
+                        <h4>Участники</h4>
+                        <div class="members-preview">
+                            {% for member in community.members.all|slice:":8" %}
+                                <div class="member-avatar small" title="{{ member.username }}">
+                                    {{ member.username|first|upper }}
+                                </div>
+                            {% endfor %}
+                            {% if members_count > 8 %}
+                                <div class="more-members">+{{ members_count|add:"-8" }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="sidebar-section">
+                        <h4>Информация</h4>
+                        <p>Создатель: <strong>{{ community.creator.username }}</strong></p>
+                        <p>Создано: {{ community.created|date:"d.m.Y" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>CoinCortex 2025</p>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const joinButton = document.querySelector('.join-btn, .leave-btn');
+        
+        if (joinButton) {
+            joinButton.addEventListener('click', function() {
+                const communityId = this.dataset.communityId;
+                const isCurrentlyJoined = this.classList.contains('leave-btn');
+                
+                fetch(`/communities/join/${communityId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.joined) {
+                        // Стал участником
+                        this.textContent = '✅ Вы участник';
+                        this.classList.remove('btn-primary', 'join-btn');
+                        this.classList.add('btn-outline', 'leave-btn');
+                    } else {
+                        // Вышел из сообщества
+                        this.textContent = 'Присоединиться к сообществу';
+                        this.classList.remove('btn-outline', 'leave-btn');
+                        this.classList.add('btn-primary', 'join-btn');
+                    }
+                    
+                    // Обновляем счетчик участников
+                    const membersCount = document.querySelector('.members-count');
+                    membersCount.textContent = `👥 ${data.members_count} участников`;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка. Попробуйте еще раз.');
+                });
+            });
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+    </script>
+</body>
+</html>
