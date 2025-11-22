@@ -299,3 +299,6 @@ def start_chat(request, username):
     except User.DoesNotExist:
         messages.error(request, 'Пользователь не найден')
         return redirect('chat')
+    
+def community(request):
+    return render(request, 'community.html')
