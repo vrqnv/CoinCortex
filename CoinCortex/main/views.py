@@ -4,12 +4,10 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-<<<<<<< HEAD
 from .models import Post, Friendship, UserRating
-=======
 from django.db.models import Q
 from .models import Post, User, Friendship, Chat, Message
->>>>>>> ed9b647160f62b6e356802c3326207b5ac1cdfba
+
 
 def index(request):
     """Главная страница с лентой постов от сообществ"""

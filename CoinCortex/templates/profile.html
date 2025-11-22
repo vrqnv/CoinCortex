@@ -231,13 +231,11 @@
                                         </button>
                                     </form>
                                 </div>
-<<<<<<< HEAD
-=======
-                                <a href="{% url 'user_profile' username=friend.username %}" class="friend-username">
-                                    {{ friend.username }}
+                                <a href="{% url 'user_profile' username=friend_data.user.username %}" class="friend-username">
+                                    {{ friend_data.user.username }}
                                 </a>
                                 <div class="friend-actions">
-                                    <a href="/chat/start/{{ friend.username }}/" class="chat-btn" title="Написать сообщение">
+                                    <a href="/chat/start/{{ friend_data.user.username }}/" class="chat-btn" title="Написать сообщение">
                                         💬
                                     </a>
                                     <form method="POST" class="remove-friend-form">
@@ -248,7 +246,6 @@
                                         </button>
                                     </form>
                                 </div>
->>>>>>> ed9b647160f62b6e356802c3326207b5ac1cdfba
                             </div>
                             {% endfor %}
                         {% else %}
