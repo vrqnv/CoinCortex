@@ -11,4 +11,7 @@ urlpatterns = [
     path('profile/<str:username>/', views.user_profile, name='user_profile'),
     path('chat/<int:chat_id>/', views.chat_detail, name='chat_detail'),  # Детальная страница чата
     path('chat/start/<str:username>/', views.start_chat, name='start_chat'),
+    path('communities/', views.communities, name='communities'),
+    path('communities/<int:community_id>/', views.community_detail, name='community_detail'),
+    path('communities/join/<int:community_id>/', views.join_community, name='join_community'),
 ]

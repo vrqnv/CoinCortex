@@ -4,13 +4,32 @@ from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save
 
+
+class Community(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name="Название")
+    description = models.TextField(verbose_name="Описание")
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_communities', verbose_name="Создатель")
+    members = models.ManyToManyField(User, related_name='joined_communities', blank=True, verbose_name="Участники")
+    avatar = models.ImageField(upload_to='communities/', null=True, blank=True, verbose_name="Аватар")
+    created = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    
+    class Meta:
+        verbose_name = "Сообщество"
+        verbose_name_plural = "Сообщества"
+    
+    def __str__(self):
+        return self.name
+
 class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
     wall_owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wall_posts')
+    community = models.ForeignKey(Community, on_delete=models.CASCADE, null=True, blank=True, related_name='posts', verbose_name="Сообщество")
     
     class Meta:
+        verbose_name = "Пост"
+        verbose_name_plural = "Посты"
         ordering = ['-created']
     
     def __str__(self):
@@ -131,3 +150,4 @@ def get_or_create_chat(self, other_user):
     return chat
 
 User.add_to_class('get_or_create_chat', get_or_create_chat)
+

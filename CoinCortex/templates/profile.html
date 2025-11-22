@@ -14,6 +14,11 @@
             <ul>
                 <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
                 <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
+                <!-- ДОБАВЛЯЕМ КНОПКУ СООБЩЕСТВ -->
+                {% if user.is_authenticated %}
+                    <li class="nav-left"><a href="{% url 'communities' %}">Сообщества</a></li>
+                {% endif %}
+                
                 {% if user.is_authenticated %}
                     <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
                     <li class="nav-right">
