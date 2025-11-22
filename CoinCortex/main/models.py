@@ -5,14 +5,33 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save
 from django.utils import timezone
 
+
+class Community(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name="Название")
+    description = models.TextField(verbose_name="Описание")
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_communities', verbose_name="Создатель")
+    members = models.ManyToManyField(User, related_name='joined_communities', blank=True, verbose_name="Участники")
+    avatar = models.ImageField(upload_to='communities/', null=True, blank=True, verbose_name="Аватар")
+    created = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    
+    class Meta:
+        verbose_name = "Сообщество"
+        verbose_name_plural = "Сообщества"
+    
+    def __str__(self):
+        return self.name
+
 class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField()
     image = models.ImageField(upload_to='posts/images/', null=True, blank=True, verbose_name='Изображение')
     created = models.DateTimeField(auto_now_add=True)
     wall_owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wall_posts')
+    community = models.ForeignKey(Community, on_delete=models.CASCADE, null=True, blank=True, related_name='posts', verbose_name="Сообщество")
     
     class Meta:
+        verbose_name = "Пост"
+        verbose_name_plural = "Посты"
         ordering = ['-created']
     
     def __str__(self):
@@ -178,44 +197,3 @@ def get_or_create_chat(self, other_user):
     return chat
 
 User.add_to_class('get_or_create_chat', get_or_create_chat)
-
-
-class Notification(models.Model):
-    """Модель уведомления"""
-    NOTIFICATION_TYPES = [
-        ('like', 'Лайк'),
-        ('comment', 'Комментарий'),
-        ('group_like', 'Лайк в группе'),
-        ('group_comment', 'Комментарий в группе'),
-        ('friend_request', 'Заявка в друзья'),
-        ('friend_accepted', 'Заявка принята'),
-    ]
-    
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications', verbose_name='Пользователь')
-    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, verbose_name='Тип уведомления')
-    from_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications', null=True, blank=True, verbose_name='От пользователя')
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications', verbose_name='Пост')
-    group_post = models.ForeignKey('groups.GroupPost', on_delete=models.CASCADE, null=True, blank=True, related_name='notifications', verbose_name='Пост группы')
-    created = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
-    read = models.BooleanField(default=False, verbose_name='Прочитано')
-    
-    class Meta:
-        ordering = ['-created']
-        verbose_name = 'Уведомление'
-        verbose_name_plural = 'Уведомления'
-    
-    def __str__(self):
-        return f"{self.get_notification_type_display()} для {self.user.username}"
-    
-    def get_message(self):
-        """Получить текст уведомления"""
-        from_user_name = self.from_user.username if self.from_user else "Кто-то"
-        messages = {
-            'like': f"{from_user_name} поставил лайк вашему посту",
-            'comment': f"{from_user_name} оставил комментарий к вашему посту",
-            'group_like': f"{from_user_name} поставил лайк посту в сообществе",
-            'group_comment': f"{from_user_name} оставил комментарий к посту в сообществе",
-            'friend_request': f"{from_user_name} отправил вам заявку в друзья",
-            'friend_accepted': f"{from_user_name} принял вашу заявку в друзья",
-        }
-        return messages.get(self.notification_type, "Новое уведомление")

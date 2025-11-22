@@ -1677,3 +1677,69 @@ footer {
 .remove-friend-btn:hover {
     animation: none;
 }
+
+.communities-banner {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    color: white;
+}
+
+.banner-content h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.5em;
+}
+
+.banner-content p {
+    margin: 0 0 15px 0;
+    opacity: 0.9;
+}
+
+.quick-communities {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.3);
+}
+
+.quick-communities h4 {
+    margin: 0 0 10px 0;
+    font-size: 1em;
+}
+
+.communities-list {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.community-badge {
+    background: rgba(255,255,255,0.2);
+    padding: 5px 12px;
+    border-radius: 20px;
+    text-decoration: none;
+    color: white;
+    font-size: 0.9em;
+    transition: background 0.3s ease;
+}
+
+.community-badge:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+/* Стили для постов с сообществами */
+.post-community {
+    color: #667eea;
+    text-decoration: none;
+    font-size: 0.9em;
+}
+
+.post-community:hover {
+    text-decoration: underline;
+}
+
+.no-posts {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>Сообщества - CoinCortex</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
+                <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
+                {% if user.is_authenticated %}
+                    <li class="nav-left"><a href="{% url 'communities' %}">Сообщества</a></li>
+                {% endif %}
+                
+                {% if user.is_authenticated %}
+                    <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
+                    <li class="nav-right">
+                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">Выйти</button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
+                    <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+         <div class="feed-container">
+            <div class="feed-header">
+                <h1>Лента новостей</h1>
+                <p>Последние посты от сообществ</p>
+                
+                <!-- ДОБАВЛЯЕМ БАННЕР СООБЩЕСТВ -->
+                <div class="communities-banner">
+                    <div class="banner-content">
+                        <h3>📚 Ваши сообщества</h3>
+                        <p>Присоединяйтесь к сообществам по интересам</p>
+                        <a href="{% url 'communities' %}" class="btn-primary">Смотреть все сообщества</a>
+                        
+                        <!-- БЫСТРЫЙ ДОСТУП К ИЗБРАННЫМ СООБЩЕСТВАМ -->
+                        {% if user_communities %}
+                        <div class="quick-communities">
+                            <h4>Ваши сообщества:</h4>
+                            <div class="communities-list">
+                                {% for community in user_communities|slice:":5" %}
+                                <a href="{% url 'community_detail' community.id %}" class="community-badge">
+                                    {{ community.name }}
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="posts-feed">
+                {% if community_posts %}
+                    {% for post in community_posts %}
+                    <div class="post-card">
+                        <div class="post-header">
+                            <div class="post-author">
+                                <div class="post-avatar">
+                                    {{ post.author.username|first|upper }}
+                                </div>
+                                <div class="author-info">
+                                    <strong>{{ post.author.username }}</strong>
+                                    <!-- ДОБАВЛЯЕМ ССЫЛКУ НА СООБЩЕСТВО -->
+                                    {% if post.community %}
+                                    <a href="{% url 'community_detail' post.community.id %}" class="post-community">
+                                        #{{ post.community.name }}
+                                    </a>
+                                    {% else %}
+                                    <span class="post-community">Сообщество</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <span class="post-date">{{ post.created|date:"d.m.Y H:i" }}</span>
+                        </div>
+                        <div class="post-content">
+                            {{ post.content|linebreaksbr }}
+                        </div>
+                        <div class="post-actions">
+                            <button class="like-btn">❤️</button>
+                            <button class="comment-btn">💬</button>
+                            <button class="share-btn">↗️</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-posts">
+                        <p>Пока нет постов от сообществ</p>
+                        <p>Присоединяйтесь к сообществам, чтобы видеть больше контента!</p>
+                        <a href="{% url 'communities' %}" class="btn-primary">Найти сообщества</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>CoinCortex 2025</p>
+    </footer>
+</body>
+</html>
