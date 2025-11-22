@@ -38,7 +38,9 @@ def index(request):
                     )
                     if not created:
                         like.delete()
+                        is_liked = False
                     else:
+                        is_liked = True
                         if post.author != request.user:
                             Notification.objects.create(
                                 user=post.author,
@@ -46,6 +48,7 @@ def index(request):
                                 from_user=request.user,
                                 group_post=post,
                             )
+                    likes_count = post.get_likes_count()
                 else:
                     # Лайк обычного поста
                     post = Post.objects.get(id=post_id)
@@ -54,7 +57,9 @@ def index(request):
                     )
                     if not created:
                         like.delete()
+                        is_liked = False
                     else:
+                        is_liked = True
                         if post.author != request.user:
                             Notification.objects.create(
                                 user=post.author,
@@ -62,7 +67,20 @@ def index(request):
                                 from_user=request.user,
                                 post=post,
                             )
+                    likes_count = post.get_likes_count()
+                
+                # Если это AJAX запрос, возвращаем JSON
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    from django.http import JsonResponse
+                    return JsonResponse({
+                        'success': True,
+                        'is_liked': is_liked,
+                        'likes_count': likes_count
+                    })
             except (Post.DoesNotExist, Exception):
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    from django.http import JsonResponse
+                    return JsonResponse({'success': False, 'error': 'Пост не найден'}, status=404)
                 messages.error(request, "Пост не найден")
             return redirect("index")
 
@@ -344,8 +362,14 @@ def profile(request):
                                 existing_friendship.accepted = True
                                 existing_friendship.save()
                     else:
-                        Friendship.objects.create(
+                        friendship = Friendship.objects.create(
                             from_user=request.user, to_user=friend_user, accepted=False
+                        )
+                        # Создаем уведомление о заявке в друзья
+                        Notification.objects.create(
+                            user=friend_user,
+                            notification_type="friend_request",
+                            from_user=request.user,
                         )
 
             except User.DoesNotExist:
@@ -364,6 +388,12 @@ def profile(request):
                 )
                 friendship.accepted = True
                 friendship.save()
+                # Создаем уведомление о принятии заявки
+                Notification.objects.create(
+                    user=friendship.from_user,
+                    notification_type="friend_accepted",
+                    from_user=request.user,
+                )
             except Friendship.DoesNotExist:
                 messages.error(request, "Заявка не найдена")
 
@@ -811,7 +841,7 @@ def chat(request):
             }
         )
 
-    # Поиск друзей для нового чата
+    # Поиск друзей для нового чата (по имени, фамилии и нику)
     search_query = request.GET.get("search", "").strip()
     search_results = []
     if search_query:
@@ -827,10 +857,13 @@ def chat(request):
         friends_list = list(sent_friends.union(received_friends))
         friends_ids = [f.id for f in friends_list]
         
-        # Теперь фильтруем по поисковому запросу
+        # Теперь фильтруем по поисковому запросу (по имени, фамилии и нику)
         search_results = User.objects.filter(
-            id__in=friends_ids,
-            username__icontains=search_query
+            id__in=friends_ids
+        ).filter(
+            Q(username__icontains=search_query) |
+            Q(profile__first_name__icontains=search_query) |
+            Q(profile__last_name__icontains=search_query)
         ).select_related("profile")[:10]
 
     return render(
@@ -959,8 +992,14 @@ def friends_page(request):
                                 existing_friendship.accepted = True
                                 existing_friendship.save()
                     else:
-                        Friendship.objects.create(
+                        friendship = Friendship.objects.create(
                             from_user=request.user, to_user=friend_user, accepted=False
+                        )
+                        # Создаем уведомление о заявке в друзья
+                        Notification.objects.create(
+                            user=friend_user,
+                            notification_type="friend_request",
+                            from_user=request.user,
                         )
             except User.DoesNotExist:
                 messages.error(request, "Пользователь не найден")
@@ -975,6 +1014,12 @@ def friends_page(request):
                 )
                 friendship.accepted = True
                 friendship.save()
+                # Создаем уведомление о принятии заявки
+                Notification.objects.create(
+                    user=friendship.from_user,
+                    notification_type="friend_accepted",
+                    from_user=request.user,
+                )
             except Friendship.DoesNotExist:
                 messages.error(request, "Заявка не найдена")
             return redirect("friends")
@@ -1071,12 +1116,16 @@ def friends_page(request):
                 }
             )
 
-    # Поиск пользователей
+    # Поиск пользователей (по имени, фамилии и нику)
     search_query = request.GET.get("search", "").strip()
     search_results = []
     if search_query:
         search_results = (
-            User.objects.filter(username__icontains=search_query)
+            User.objects.filter(
+                Q(username__icontains=search_query) |
+                Q(profile__first_name__icontains=search_query) |
+                Q(profile__last_name__icontains=search_query)
+            )
             .exclude(id=request.user.id)
             .distinct()
             .select_related("profile")[:10]
@@ -1108,6 +1157,7 @@ def notifications(request):
     user_notifications = (
         Notification.objects.filter(user=request.user)
         .select_related("from_user", "post", "group_post")
+        .prefetch_related("from_user__friendship_requests_sent")
         .order_by("-created")[:50]
     )
 

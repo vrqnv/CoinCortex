@@ -9,8 +9,8 @@
         {% if not user.is_authenticated %}
         <div class="welcome-section">
             <div class="welcome-card">
-                <h1>Добро пожаловать в CoinCortex</h1>
-                <p>Социальная сеть для общения и обмена новостями</p>
+                <h1>Добро пожаловать в Concord</h1>
+                <p>Социальная сеть для общения и поиска единомышленников</p>
                 <div class="auth-buttons">
                     <a href="{% url 'login' %}" class="btn-primary">Войти</a>
                     <a href="{% url 'register' %}" class="btn-secondary">Зарегистрироваться</a>
@@ -50,7 +50,11 @@
                                         {% if not item.post.author.profile.avatar %}{{ item.post.author.username|first|upper }}{% endif %}
                                     </div>
                                     <div class="author-info">
-                                        <strong>{{ item.post.author.username }}</strong>
+                                        <strong>
+                                            <a href="{% url 'user_profile' username=item.post.author.username %}" style="color: #1f2937; text-decoration: none;">
+                                                {{ item.post.author.username }}
+                                            </a>
+                                        </strong>
                                         <span class="post-community">Пользователь</span>
                                     </div>
                                 {% endif %}
@@ -80,11 +84,11 @@
                         
                         <div class="post-actions">
                             {% if user.is_authenticated %}
-                            <form method="POST" style="display: inline;">
+                            <form method="POST" class="like-form" data-post-id="{% if item.type == 'group' %}group_{{ item.post.id }}{% else %}{{ item.post.id }}{% endif %}" style="display: inline;">
                                 {% csrf_token %}
                                 <input type="hidden" name="like_post" value="{% if item.type == 'group' %}group_{{ item.post.id }}{% else %}{{ item.post.id }}{% endif %}">
-                                <button type="submit" class="like-btn" style="{% if item.is_liked %}color: #ef4444;{% endif %}">
-                                    ❤️ {{ item.likes_count }}
+                                <button type="submit" class="like-btn" style="{% if item.is_liked %}color: #ef4444;{% endif %}" data-liked="{% if item.is_liked %}true{% else %}false{% endif %}">
+                                    ❤️ <span class="likes-count">{{ item.likes_count }}</span>
                                 </button>
                             </form>
                             {% else %}

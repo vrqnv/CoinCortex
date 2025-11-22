@@ -11,49 +11,68 @@
             <div class="profile-main">
                 <div class="profile-card">
                     <div class="user-info">
-                        <div class="avatar">
-                            <div class="default-avatar">
+                        <div class="avatar" style="{% if profile_user.profile.avatar %}background-image: url('{{ profile_user.profile.avatar.url }}'); background-size: cover;{% endif %}">
+                            {% if not profile_user.profile.avatar %}
                                 {{ profile_user.username|first|upper }}
-                            </div>
+                            {% endif %}
                         </div>
                         <div class="user-details">
-                            <h1>{{ profile_user.username }}</h1>
-                            <p class="join-date">Зарегистрирован: {{ profile_user.date_joined|date:"d.m.Y" }}</p>
+                            <h1>
+                                {% if profile_user.profile.first_name or profile_user.profile.last_name %}
+                                    {{ profile_user.profile.get_full_name }}
+                                {% else %}
+                                    {{ profile_user.username }}
+                                {% endif %}
+                            </h1>
+                            {% if profile_user.profile.first_name or profile_user.profile.last_name %}
+                                <p style="color: var(--gray-500); font-size: 0.95rem; margin-bottom: 0.5rem;">@{{ profile_user.username }}</p>
+                            {% endif %}
+                            
+                            <!-- Информация о пользователе -->
+                            {% if profile_user.profile.bio %}
+                                <p style="color: var(--gray-700); font-size: 1rem; margin-bottom: 1rem; line-height: 1.6;">{{ profile_user.profile.bio }}</p>
+                            {% endif %}
+                            
+                            {% if profile_user.profile.birth_date %}
+                                <p style="color: var(--gray-500); font-size: 0.9rem; margin-bottom: 1rem;">
+                                    📅 Дата рождения: {{ profile_user.profile.birth_date|date:"d.m.Y" }}
+                                </p>
+                            {% endif %}
                             
                             <!-- Кнопки действий с друзьями -->
-                            <div class="friend-actions">
-                                {% if user.username != profile_user.username %}
-                                    {% if is_friend %}
-                                        <span class="friend-status">✅ Друг</span>
-                                        <form method="POST" action="{% url 'profile' %}" style="display: inline; margin-left: 10px;">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="remove_friend" value="{{ profile_user.username }}">
-                                            <button type="submit" class="remove-friend-btn large">Удалить из друзей</button>
-                                        </form>
-                                    {% elif friend_request_sent %}
-                                        <span class="friend-status">⏳ Заявка отправлена</span>
-                                    {% elif incoming_request %}
-                                        <form method="POST" action="{% url 'profile' %}">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="accept_friend" value="{{ incoming_request.id }}">
-                                            <button type="submit" class="accept-friend-btn">Принять заявку</button>
-                                        </form>
-                                    {% else %}
-                                        <form method="POST" action="{% url 'profile' %}">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="add_friend" value="{{ profile_user.username }}">
-                                            <button type="submit" class="add-friend-btn">Добавить в друзья</button>
-                                        </form>
-                                    {% endif %}
-                                {% endif %}
-                            </div>
-
-                            <!-- Кнопка написать сообщение -->
                             {% if user.username != profile_user.username %}
-                            <div class="chat-action">
-                                <a href="/chat/start/{{ profile_user.username }}/" class="start-chat-btn">
-                                    💬 Написать сообщение
-                                </a>
+                            <div class="friend-actions" style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; margin-top: 1rem;">
+                                {% if is_friend %}
+                                    <span class="friend-status">✅ Друг</span>
+                                    <a href="/chat/start/{{ profile_user.username }}/" class="start-chat-btn" style="text-decoration: none; display: inline-block;">
+                                        💬 Написать сообщение
+                                    </a>
+                                    <form method="POST" action="{% url 'profile' %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="remove_friend" value="{{ profile_user.username }}">
+                                        <button type="submit" class="remove-friend-btn large">Удалить из друзей</button>
+                                    </form>
+                                {% elif friend_request_sent %}
+                                    <span class="friend-status">⏳ Заявка отправлена</span>
+                                    <a href="/chat/start/{{ profile_user.username }}/" class="start-chat-btn" style="text-decoration: none; display: inline-block;">
+                                        💬 Написать сообщение
+                                    </a>
+                                {% elif incoming_request %}
+                                    <form method="POST" action="{% url 'profile' %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="accept_friend" value="{{ incoming_request.id }}">
+                                        <button type="submit" class="accept-friend-btn">Принять заявку</button>
+                                    </form>
+                                {% else %}
+                                    <a href="/chat/start/{{ profile_user.username }}/" class="start-chat-btn" style="text-decoration: none; display: inline-block;">
+                                        💬 Написать сообщение
+                                    </a>
+                                    <form method="POST" action="{% url 'profile' %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="add_friend" value="{{ profile_user.username }}">
+                                        <button type="submit" class="add-friend-btn">Добавить в друзья</button>
+                                    </form>
+                                {% endif %}
                             </div>
                             {% endif %}
                         </div>
@@ -164,22 +183,6 @@
                             </div>
                         {% endif %}
                     </div>
-                </div>
-            </div>
-
-            <!-- Правая колонка - информация -->
-            <div class="friends-sidebar">
-                <div class="info-section">
-                    <h3>Информация</h3>
-                    <div class="user-stats">
-                        <p>Постов: {{ posts.count }}</p>
-                        <p>На сайте с: {{ profile_user.date_joined|date:"d.m.Y" }}</p>
-                    </div>
-                </div>
-
-                <!-- Кнопка назад -->
-                <div class="back-section">
-                    <a href="{% url 'profile' %}" class="back-btn">← Назад к моему профилю</a>
                 </div>
             </div>
         </div>

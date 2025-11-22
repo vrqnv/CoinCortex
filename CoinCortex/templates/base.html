@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'style.css' %}">
-    <title>{% block title %}CoinCortex{% endblock %}</title>
+    <title>{% block title %}Concord{% endblock %}</title>
 </head>
 <body>
     <header>
@@ -24,7 +24,7 @@
                     <li class="nav-right"><a href="{% url 'friends' %}">Друзья</a></li>
                     <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
                 {% else %}
-                    <li class="nav-center"><a href="{% url 'index' %}"><img src="{% static 'logo.png' %}" alt="Logo" style="height: 40px; width: auto;"></a></li>
+                    <li class="nav-center-not-auth"><a href="{% url 'index' %}"><img src="{% static 'logo.png' %}" alt="Logo" style="height: 40px; width: auto;"></a></li>
                     <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
                     <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
                 {% endif %}
@@ -38,7 +38,7 @@
     </main>
 
     <footer>
-        <p>CoinCortex 2025</p>
+        <p>Concord 2025</p>
     </footer>
 
     <script>
@@ -210,6 +210,81 @@
                         }
                     }
                 });
+            });
+            
+            // AJAX для лайков на главной странице
+            const likeForms = document.querySelectorAll('.like-form');
+            likeForms.forEach(function(form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(form);
+                    const button = form.querySelector('.like-btn');
+                    const likesCountSpan = form.querySelector('.likes-count');
+                    const isLiked = button.getAttribute('data-liked') === 'true';
+                    
+                    fetch(window.location.pathname, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                        }
+                    })
+                    .then(function(response) {
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        if (data.success) {
+                            // Обновляем состояние кнопки
+                            button.setAttribute('data-liked', data.is_liked);
+                            if (data.is_liked) {
+                                button.style.color = '#ef4444';
+                            } else {
+                                button.style.color = '';
+                            }
+                            if (likesCountSpan) {
+                                likesCountSpan.textContent = data.likes_count;
+                            }
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error('Error:', error);
+                        // В случае ошибки отправляем форму обычным способом
+                        form.submit();
+                    });
+                });
+            });
+            
+            // Автоматическое определение часового пояса и форматирование дат
+            function formatDateInUserTimezone(dateElement) {
+                if (!dateElement || !dateElement.textContent) return;
+                
+                const dateText = dateElement.textContent.trim();
+                if (!dateText) return;
+                
+                // Парсим дату в формате "dd.mm.yyyy HH:MM"
+                const match = dateText.match(/(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}):(\d{2})/);
+                if (!match) return;
+                
+                const [, day, month, year, hour, minute] = match;
+                // Создаем дату в UTC (предполагаем, что сервер хранит в UTC)
+                const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
+                
+                // Форматируем в локальном времени пользователя
+                const localDate = new Date(utcDate);
+                const formattedDate = localDate.toLocaleString('ru-RU', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                dateElement.textContent = formattedDate;
+            }
+            
+            // Применяем форматирование ко всем датам на странице
+            document.querySelectorAll('.post-date, .message-time').forEach(function(dateElement) {
+                formatDateInUserTimezone(dateElement);
             });
         });
     </script>

@@ -256,3 +256,23 @@ class Notification(models.Model):
     
     def __str__(self):
         return f'{self.get_notification_type_display()} для {self.user.username}'
+    
+    def get_message(self):
+        """Получить текст уведомления"""
+        if self.notification_type == 'like':
+            return f'{self.from_user.username} поставил(а) лайк вашему посту'
+        elif self.notification_type == 'comment':
+            return f'{self.from_user.username} оставил(а) комментарий к вашему посту'
+        elif self.notification_type == 'comment_like':
+            return f'{self.from_user.username} поставил(а) лайк вашему комментарию'
+        elif self.notification_type == 'group_like':
+            return f'{self.from_user.username} поставил(а) лайк вашему посту в группе'
+        elif self.notification_type == 'group_comment':
+            return f'{self.from_user.username} оставил(а) комментарий к вашему посту в группе'
+        elif self.notification_type == 'group_comment_like':
+            return f'{self.from_user.username} поставил(а) лайк вашему комментарию в группе'
+        elif self.notification_type == 'friend_request':
+            return f'{self.from_user.username} отправил(а) вам заявку в друзья'
+        elif self.notification_type == 'friend_accepted':
+            return f'{self.from_user.username} принял(а) вашу заявку в друзья'
+        return f'{self.get_notification_type_display()}'

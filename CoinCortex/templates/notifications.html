@@ -29,7 +29,20 @@
                         </div>
                         <div class="post-content">
                             <p>{{ notification.get_message }}</p>
-                            {% if notification.post %}
+                            {% if notification.notification_type == 'friend_request' %}
+                                <div style="margin-top: 0.75rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                                    <a href="{% url 'user_profile' username=notification.from_user.username %}" class="btn-primary" style="padding: 0.5rem 1rem; text-decoration: none; font-size: 0.9rem;">Перейти на профиль</a>
+                                    {% for friendship in user.friendship_requests_received.all %}
+                                        {% if friendship.from_user == notification.from_user and not friendship.accepted %}
+                                            <form method="POST" action="{% url 'profile' %}" style="display: inline;">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="accept_friend" value="{{ friendship.id }}">
+                                                <button type="submit" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem; border: none; cursor: pointer;">Принять заявку</button>
+                                            </form>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% elif notification.post %}
                                 <div style="margin-top: 0.5rem; padding: 0.5rem; background: #f9fafb; border-radius: 8px;">
                                     <a href="{% url 'index' %}" style="color: #7C3AED; text-decoration: none;">Перейти к посту →</a>
                                 </div>

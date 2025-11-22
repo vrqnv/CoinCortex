@@ -151,6 +151,15 @@ nav ul.nav-menu {
 .nav-center {
     display: flex;
     justify-content: center;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+.nav-center-not-auth {
+    display: flex;
+    justify-content: center;
     flex: 1;
     margin: 0 2rem;
 }
@@ -1122,22 +1131,26 @@ main {
     background: var(--gradient-primary);
     color: var(--white);
     border: none;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+    padding: 0.875rem 2rem;
+    border-radius: 14px;
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 700;
     transition: all 0.3s ease;
     box-shadow: var(--shadow-purple);
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    font-family: 'Nunito', sans-serif;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
 }
 
 .add-friend-btn:hover {
-    transform: scale(1.15);
+    transform: translateY(-3px);
     box-shadow: var(--shadow-purple-lg);
+    background: var(--gradient-soft);
+    color: var(--white);
 }
 
 /* ========== ДРУЗЬЯ ========== */
