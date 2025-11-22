@@ -9,8 +9,8 @@
         {% if not user.is_authenticated %}
         <div class="welcome-section">
             <div class="welcome-card">
-                <h1>Добро пожаловать в CoinCortex</h1>
-                <p>Социальная сеть для общения и обмена новостями</p>
+                <h1>Добро пожаловать в CONCORD</h1>
+                <p>Социальная сеть для общения и поиска единомышленников</p>
                 <div class="auth-buttons">
                     <a href="{% url 'login' %}" class="btn-primary">Войти</a>
                     <a href="{% url 'register' %}" class="btn-secondary">Зарегистрироваться</a>
@@ -21,8 +21,8 @@
         <!-- Лента постов -->
         <div class="feed-container">
             <div class="feed-header">
-                <h1>Популярные посты</h1>
-                <p>Посты из наиболее популярных групп и ваши посты</p>
+                <h1>Лента новостей</h1>
+                <p>Посты друзей и сообществ</p>
             </div>
 
             <div class="posts-feed">
