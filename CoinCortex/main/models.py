@@ -197,3 +197,31 @@ def get_or_create_chat(self, other_user):
     return chat
 
 User.add_to_class('get_or_create_chat', get_or_create_chat)
+
+
+class Notification(models.Model):
+    """Модель уведомлений"""
+    NOTIFICATION_TYPES = [
+        ('like', 'Лайк'),
+        ('comment', 'Комментарий'),
+        ('group_like', 'Лайк в группе'),
+        ('group_comment', 'Комментарий в группе'),
+        ('friend_request', 'Заявка в друзья'),
+        ('friend_accepted', 'Заявка принята'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications', verbose_name='Пользователь')
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, verbose_name='Тип уведомления')
+    from_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications', null=True, blank=True, verbose_name='От пользователя')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True, verbose_name='Пост')
+    group_post = models.ForeignKey('groups.GroupPost', on_delete=models.CASCADE, related_name='notifications', null=True, blank=True, verbose_name='Пост группы')
+    created = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    read = models.BooleanField(default=False, verbose_name='Прочитано')
+    
+    class Meta:
+        ordering = ['-created']
+        verbose_name = 'Уведомление'
+        verbose_name_plural = 'Уведомления'
+    
+    def __str__(self):
+        return f'{self.get_notification_type_display()} для {self.user.username}'
