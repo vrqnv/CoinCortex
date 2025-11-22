@@ -210,7 +210,7 @@ class Message(models.Model):
         ordering = ['created']
     
     def __str__(self):
-        return f"Message in chat {self.chat.id}"
+        return f"Сообщение {self.id}"
 
 # Добавляем метод к User для удобства
 def get_or_create_chat(self, other_user):

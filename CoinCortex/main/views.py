@@ -38,7 +38,6 @@ def index(request):
                     )
                     if not created:
                         like.delete()
-                        messages.info(request, "Лайк убран")
                     else:
                         if post.author != request.user:
                             Notification.objects.create(
@@ -47,7 +46,6 @@ def index(request):
                                 from_user=request.user,
                                 group_post=post,
                             )
-                        messages.success(request, "Лайк поставлен")
                 else:
                     # Лайк обычного поста
                     post = Post.objects.get(id=post_id)
@@ -56,7 +54,6 @@ def index(request):
                     )
                     if not created:
                         like.delete()
-                        messages.info(request, "Лайк убран")
                     else:
                         if post.author != request.user:
                             Notification.objects.create(
@@ -65,7 +62,6 @@ def index(request):
                                 from_user=request.user,
                                 post=post,
                             )
-                        messages.success(request, "Лайк поставлен")
             except (Post.DoesNotExist, Exception):
                 messages.error(request, "Пост не найден")
             return redirect("index")
@@ -92,7 +88,6 @@ def index(request):
                                 from_user=request.user,
                                 group_post=post,
                             )
-                        messages.success(request, "Комментарий добавлен")
                     else:
                         # Комментарий к обычному посту
                         post = Post.objects.get(id=post_id)
@@ -106,7 +101,6 @@ def index(request):
                                 from_user=request.user,
                                 post=post,
                             )
-                        messages.success(request, "Комментарий добавлен")
                 except (Post.DoesNotExist, Exception):
                     messages.error(request, "Пост не найден")
             return redirect("index")
@@ -126,7 +120,6 @@ def index(request):
                     )
                     if not created:
                         like.delete()
-                        messages.info(request, "Лайк убран")
                     else:
                         if comment.author != request.user:
                             Notification.objects.create(
@@ -135,7 +128,6 @@ def index(request):
                                 from_user=request.user,
                                 group_comment=comment,
                             )
-                        messages.success(request, "Лайк поставлен")
                 else:
                     # Лайк обычного комментария
                     comment = PostComment.objects.get(id=comment_id)
@@ -144,7 +136,6 @@ def index(request):
                     )
                     if not created:
                         like.delete()
-                        messages.info(request, "Лайк убран")
                     else:
                         if comment.author != request.user:
                             Notification.objects.create(
@@ -153,7 +144,6 @@ def index(request):
                                 from_user=request.user,
                                 comment=comment,
                             )
-                        messages.success(request, "Лайк поставлен")
             except (PostComment.DoesNotExist, Exception):
                 messages.error(request, "Комментарий не найден")
             return redirect("index")
@@ -321,7 +311,6 @@ def profile(request):
                 if image:
                     post.image = image
                     post.save()
-                messages.success(request, "Пост успешно опубликован!")
                 return redirect("profile")
 
         # Удаление поста
@@ -330,7 +319,6 @@ def profile(request):
             try:
                 post = Post.objects.get(id=post_id, author=request.user)
                 post.delete()
-                messages.success(request, "Пост удален")
             except Post.DoesNotExist:
                 messages.error(request, "Пост не найден")
             return redirect("profile")
@@ -350,30 +338,14 @@ def profile(request):
                     ).first()
 
                     if existing_friendship:
-                        if existing_friendship.accepted:
-                            messages.info(
-                                request, f"Вы уже друзья с {friend_user.username}"
-                            )
-                        else:
-                            if existing_friendship.from_user == request.user:
-                                messages.info(
-                                    request,
-                                    f"Вы уже отправили заявку {friend_user.username}",
-                                )
-                            else:
+                        if not existing_friendship.accepted:
+                            if existing_friendship.from_user != request.user:
                                 # Принимаем входящую заявку
                                 existing_friendship.accepted = True
                                 existing_friendship.save()
-                                messages.success(
-                                    request,
-                                    f"Вы приняли заявку от {friend_user.username}",
-                                )
                     else:
                         Friendship.objects.create(
                             from_user=request.user, to_user=friend_user, accepted=False
-                        )
-                        messages.success(
-                            request, f"Заявка отправлена {friend_user.username}"
                         )
 
             except User.DoesNotExist:
@@ -392,9 +364,6 @@ def profile(request):
                 )
                 friendship.accepted = True
                 friendship.save()
-                messages.success(
-                    request, f"Вы приняли заявку от {friendship.from_user.username}"
-                )
             except Friendship.DoesNotExist:
                 messages.error(request, "Заявка не найдена")
 
@@ -413,7 +382,6 @@ def profile(request):
                     | Q(from_user=friend_user, to_user=request.user),
                     accepted=True,
                 ).delete()
-                messages.success(request, f"{friend_user.username} удален из друзей")
             except User.DoesNotExist:
                 messages.error(request, "Пользователь не найден")
             return redirect("profile")
@@ -433,7 +401,6 @@ def profile(request):
                     )
                     if not created:
                         like.delete()
-                        messages.info(request, "Лайк убран")
                     else:
                         if post.author != request.user:
                             Notification.objects.create(
@@ -442,7 +409,6 @@ def profile(request):
                                 from_user=request.user,
                                 group_post=post,
                             )
-                        messages.success(request, "Лайк поставлен")
                 else:
                     # Лайк обычного поста
                     post = Post.objects.get(id=post_id)
@@ -451,7 +417,6 @@ def profile(request):
                     )
                     if not created:
                         like.delete()
-                        messages.info(request, "Лайк убран")
                     else:
                         if post.author != request.user:
                             Notification.objects.create(
@@ -460,7 +425,6 @@ def profile(request):
                                 from_user=request.user,
                                 post=post,
                             )
-                        messages.success(request, "Лайк поставлен")
             except (Post.DoesNotExist, GroupPost.DoesNotExist):
                 messages.error(request, "Пост не найден")
             referer = request.META.get("HTTP_REFERER", "index")
@@ -488,7 +452,6 @@ def profile(request):
                                 from_user=request.user,
                                 group_post=post,
                             )
-                        messages.success(request, "Комментарий добавлен")
                     else:
                         # Комментарий к обычному посту
                         post = Post.objects.get(id=post_id)
@@ -502,7 +465,6 @@ def profile(request):
                                 from_user=request.user,
                                 post=post,
                             )
-                        messages.success(request, "Комментарий добавлен")
                 except (Post.DoesNotExist, GroupPost.DoesNotExist):
                     messages.error(request, "Пост не найден")
             referer = request.META.get("HTTP_REFERER", "index")
@@ -523,7 +485,6 @@ def profile(request):
                     )
                     if not created:
                         like.delete()
-                        messages.info(request, "Лайк убран")
                     else:
                         if comment.author != request.user:
                             Notification.objects.create(
@@ -532,7 +493,6 @@ def profile(request):
                                 from_user=request.user,
                                 group_comment=comment,
                             )
-                        messages.success(request, "Лайк поставлен")
                 else:
                     # Лайк обычного комментария
                     comment = PostComment.objects.get(id=comment_id)
@@ -541,7 +501,6 @@ def profile(request):
                     )
                     if not created:
                         like.delete()
-                        messages.info(request, "Лайк убран")
                     else:
                         if comment.author != request.user:
                             Notification.objects.create(
@@ -550,7 +509,6 @@ def profile(request):
                                 from_user=request.user,
                                 comment=comment,
                             )
-                        messages.success(request, "Лайк поставлен")
             except (PostComment.DoesNotExist, Exception):
                 messages.error(request, "Комментарий не найден")
             referer = request.META.get("HTTP_REFERER", "index")
@@ -571,7 +529,6 @@ def profile(request):
                     )
                     if not created:
                         like.delete()
-                        messages.info(request, "Лайк убран")
                     else:
                         if comment.author != request.user:
                             Notification.objects.create(
@@ -580,7 +537,6 @@ def profile(request):
                                 from_user=request.user,
                                 group_comment=comment,
                             )
-                        messages.success(request, "Лайк поставлен")
                 else:
                     # Лайк обычного комментария
                     comment = PostComment.objects.get(id=comment_id)
@@ -589,7 +545,6 @@ def profile(request):
                     )
                     if not created:
                         like.delete()
-                        messages.info(request, "Лайк убран")
                     else:
                         if comment.author != request.user:
                             Notification.objects.create(
@@ -598,7 +553,6 @@ def profile(request):
                                 from_user=request.user,
                                 comment=comment,
                             )
-                        messages.success(request, "Лайк поставлен")
             except (PostComment.DoesNotExist, Exception):
                 messages.error(request, "Комментарий не найден")
             referer = request.META.get("HTTP_REFERER", "index")
@@ -643,23 +597,12 @@ def profile(request):
     ).select_related("profile")
     friends_list = list(sent_friends.union(received_friends))
 
-    # Получаем входящие заявки в друзья
-    incoming_requests = Friendship.objects.filter(to_user=request.user, accepted=False)
-
-    # Получаем исходящие заявки
-    outgoing_requests = Friendship.objects.filter(
-        from_user=request.user, accepted=False
-    )
-
-    # Поиск пользователей (если есть поисковый запрос)
-    search_query = request.GET.get("search", "").strip()
-    search_results = []
-    if search_query:
-        search_results = (
-            User.objects.filter(username__icontains=search_query)
-            .exclude(id=request.user.id)
-            .distinct()[:10]
-        )
+    # Получаем сообщества, на которые подписан пользователь
+    from groups.models import Group, GroupSubscription
+    user_communities = Group.objects.filter(
+        subscriptions__user=request.user,
+        subscriptions__is_subscribed=True
+    ).select_related().distinct().order_by('-created')[:20]
 
     return render(
         request,
@@ -667,11 +610,7 @@ def profile(request):
         {
             "user": request.user,
             "posts": posts_with_info,
-            "friends": friends_list,
-            "incoming_requests": incoming_requests,
-            "outgoing_requests": outgoing_requests,
-            "search_results": search_results,
-            "search_query": search_query,
+            "user_communities": user_communities,
         },
     )
 
@@ -682,7 +621,6 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            messages.success(request, "Регистрация успешна!")
             return redirect("index")
         else:
             messages.error(request, "Исправьте ошибки в форме")
@@ -738,7 +676,6 @@ def user_profile(request, username):
                     if "image" in request.FILES:
                         post.image = request.FILES["image"]
                         post.save()
-                    messages.success(request, "Пост опубликован!")
                     return redirect("user_profile", username=username)
 
             # Лайк поста
@@ -751,7 +688,6 @@ def user_profile(request, username):
                     )
                     if not created:
                         like.delete()
-                        messages.info(request, "Лайк убран")
                     else:
                         if post.author != request.user:
                             Notification.objects.create(
@@ -760,7 +696,6 @@ def user_profile(request, username):
                                 from_user=request.user,
                                 post=post,
                             )
-                        messages.success(request, "Лайк поставлен")
                 except Post.DoesNotExist:
                     messages.error(request, "Пост не найден")
                 return redirect("user_profile", username=username)
@@ -782,7 +717,6 @@ def user_profile(request, username):
                                 from_user=request.user,
                                 post=post,
                             )
-                        messages.success(request, "Комментарий добавлен")
                     except Post.DoesNotExist:
                         messages.error(request, "Пост не найден")
                 return redirect("user_profile", username=username)
@@ -985,7 +919,6 @@ def edit_profile(request):
         if "avatar" in request.FILES:
             profile.avatar = request.FILES["avatar"]
         profile.save()
-        messages.success(request, "Профиль успешно обновлен!")
         return redirect("profile")
 
     return render(request, "registration/edit_profile.html", {"profile": profile})
@@ -997,7 +930,6 @@ def delete_account(request):
     if request.method == "POST":
         if "confirm" in request.POST:
             request.user.delete()
-            messages.success(request, "Ваш аккаунт был удален")
             return redirect("index")
 
     return render(request, "registration/delete_account.html")
@@ -1022,29 +954,13 @@ def friends_page(request):
                     ).first()
 
                     if existing_friendship:
-                        if existing_friendship.accepted:
-                            messages.info(
-                                request, f"Вы уже друзья с {friend_user.username}"
-                            )
-                        else:
-                            if existing_friendship.from_user == request.user:
-                                messages.info(
-                                    request,
-                                    f"Вы уже отправили заявку {friend_user.username}",
-                                )
-                            else:
+                        if not existing_friendship.accepted:
+                            if existing_friendship.from_user != request.user:
                                 existing_friendship.accepted = True
                                 existing_friendship.save()
-                                messages.success(
-                                    request,
-                                    f"Вы приняли заявку от {friend_user.username}",
-                                )
                     else:
                         Friendship.objects.create(
                             from_user=request.user, to_user=friend_user, accepted=False
-                        )
-                        messages.success(
-                            request, f"Заявка отправлена {friend_user.username}"
                         )
             except User.DoesNotExist:
                 messages.error(request, "Пользователь не найден")
@@ -1059,9 +975,6 @@ def friends_page(request):
                 )
                 friendship.accepted = True
                 friendship.save()
-                messages.success(
-                    request, f"Вы приняли заявку от {friendship.from_user.username}"
-                )
             except Friendship.DoesNotExist:
                 messages.error(request, "Заявка не найдена")
             return redirect("friends")
@@ -1076,7 +989,6 @@ def friends_page(request):
                     | Q(from_user=friend_user, to_user=request.user),
                     accepted=True,
                 ).delete()
-                messages.success(request, f"{friend_user.username} удален из друзей")
             except User.DoesNotExist:
                 messages.error(request, "Пользователь не найден")
             return redirect("friends")
@@ -1273,8 +1185,5 @@ def join_community(request, community_id):
 
     if request.user not in community.members.all():
         community.members.add(request.user)
-        messages.success(request, f"Вы присоединились к сообществу {community.name}")
-    else:
-        messages.info(request, "Вы уже являетесь участником этого сообщества")
 
     return redirect("community_detail", community_id=community.id)

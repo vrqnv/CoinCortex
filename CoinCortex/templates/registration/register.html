@@ -7,9 +7,6 @@
 
 {% block content %}
 <div class="auth-container">
-    <div class="auth-logo-center">
-        <img src="{% static 'logo.png' %}" alt="Logo" style="height: 80px; width: auto; margin-bottom: 2rem;">
-    </div>
     <div class="auth-card">
         <div class="card-header">
             <h2>Регистрация пользователя</h2>
@@ -24,7 +21,7 @@
             <form method="post" class="auth-form">
                 {% csrf_token %}
                 {% bootstrap_form form %}
-                <div class="form-actions">
+                <div class="form-actions" style="margin-top: 1.5rem; text-align: center;">
                     {% bootstrap_button button_type="submit" content="Зарегистрироваться" button_class="btn-primary" %}
                 </div>
             </form>

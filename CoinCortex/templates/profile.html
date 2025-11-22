@@ -27,10 +27,9 @@
                             {% if user.profile.birth_date %}
                                 <p style="color: #6b7280; font-size: 0.9rem; margin-top: 0.5rem;">Дата рождения: {{ user.profile.birth_date|date:"d.m.Y" }}</p>
                             {% endif %}
-                            <p class="friends-count">Друзей: {{ friends|length }}</p>
                             <div style="margin-top: 1rem; display: flex; gap: 1rem;">
                                 <a href="{% url 'edit_profile' %}" class="btn-primary" style="padding: 0.5rem 1rem; text-decoration: none;">Редактировать профиль</a>
-                                <a href="{% url 'delete_account' %}" class="btn-secondary" style="padding: 0.5rem 1rem; text-decoration: none; background: #ef4444; color: white;">Удалить аккаунт</a>
+                                <a href="{% url 'delete_account' %}" class="btn-secondary" style="padding: 0.5rem 1rem; text-decoration: none; background: #ef4444; color: white; border: none;">Удалить аккаунт</a>
                             </div>
                         </div>
                     </div>
@@ -94,108 +93,31 @@
                 </div>
             </div>
 
-            <!-- Правая колонка - друзья и поиск -->
+            <!-- Правая колонка - сообщества -->
             <div class="friends-sidebar">
-                <!-- Поиск друзей -->
-                <div class="search-section">
-                    <h3>Поиск друзей</h3>
-                    <form method="GET" class="search-form">
-                        <input type="text" name="search" value="{{ search_query }}" placeholder="Введите имя пользователя..." class="search-input">
-                        <button type="submit" class="search-btn">🔍</button>
-                    </form>
-
-                    <!-- Результаты поиска -->
-                    {% if search_query %}
-                    <div class="search-results">
-                        <h4>Результаты поиска:</h4>
-                        {% if search_results %}
-                            {% for result in search_results %}
-                            <div class="search-result-item">
-                                <div class="result-avatar">
-                                    {{ result.username|first|upper }}
-                                </div>
-                                <span class="result-username">{{ result.username }}</span>
-                                <form method="POST" class="add-friend-form">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="add_friend" value="{{ result.username }}">
-                                    <button type="submit" class="add-friend-btn" title="Добавить в друзья">
-                                        +
-                                    </button>
-                                </form>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <p class="no-results">Пользователи не найдены</p>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-                </div>
-
-                <!-- Входящие заявки в друзья -->
-                {% if incoming_requests %}
-                <div class="requests-section">
-                    <h3>Заявки в друзья</h3>
-                    {% for request in incoming_requests %}
-                    <div class="request-item">
-                        <div class="request-avatar">
-                            {{ request.from_user.username|first|upper }}
-                        </div>
-                        <span class="request-username">{{ request.from_user.username }}</span>
-                        <form method="POST" class="accept-friend-form">
-                            {% csrf_token %}
-                            <input type="hidden" name="accept_friend" value="{{ request.id }}">
-                            <button type="submit" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem; text-decoration: none; border: none; cursor: pointer; white-space: nowrap;">Принять заявку</button>
-                        </form>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-
-                <!-- Исходящие заявки -->
-                {% if outgoing_requests %}
-                <div class="requests-section">
-                    <h3>Отправленные заявки</h3>
-                    {% for request in outgoing_requests %}
-                    <div class="request-item">
-                        <div class="request-avatar">
-                            {{ request.to_user.username|first|upper }}
-                        </div>
-                        <span class="request-username">{{ request.to_user.username }}</span>
-                        <span class="request-status">⏳ Ожидание</span>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-
-                <!-- Список друзей (краткий) -->
+                <!-- Список сообществ -->
                 <div class="friends-section">
-                    <h3>Мои друзья</h3>
+                    <h3>Мои сообщества</h3>
                     <div class="friends-list">
-                        {% if friends %}
-                            {% for friend in friends %}
-                            <div class="friend-item">
-                                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                    <div class="friend-avatar" style="{% if friend.profile.avatar %}background-image: url('{{ friend.profile.avatar.url }}'); background-size: cover;{% endif %}">
-                                        {% if not friend.profile.avatar %}{{ friend.username|first|upper }}{% endif %}
+                        {% if user_communities %}
+                            {% for community in user_communities %}
+                            <a href="{% url 'group_detail' group_id=community.id %}" style="text-decoration: none; color: inherit;">
+                                <div class="friend-item community-item">
+                                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                        <div class="friend-avatar" style="{% if community.avatar %}background-image: url('{{ community.avatar.url }}'); background-size: cover;{% endif %}">
+                                            {% if not community.avatar %}{{ community.name|first|upper }}{% endif %}
+                                        </div>
+                                        <span class="friend-username">
+                                            {{ community.name }}
+                                        </span>
                                     </div>
-                                    <a href="{% url 'user_profile' username=friend.username %}" class="friend-username">
-                                        {{ friend.username }}
-                                    </a>
                                 </div>
-                                <div class="friend-actions" style="margin-top: 0.5rem;">
-                                    <a href="/chat/start/{{ friend.username }}/" class="chat-btn" title="Написать сообщение" style="text-decoration: none; padding: 0.25rem 0.5rem; background: #7C3AED; color: white; border-radius: 4px;">
-                                        💬 Написать
-                                    </a>
-                                </div>
-                            </div>
+                            </a>
                             {% endfor %}
-                            <div style="margin-top: 1rem; text-align: center;">
-                                <a href="{% url 'friends' %}" class="btn-primary" style="padding: 0.5rem 1rem; text-decoration: none;">Все друзья →</a>
-                            </div>
                         {% else %}
-                            <p class="no-friends">У вас пока нет друзей</p>
+                            <p class="no-friends">Вы пока не подписаны ни на одно сообщество</p>
                             <div style="margin-top: 1rem; text-align: center;">
-                                <a href="{% url 'friends' %}" class="btn-primary" style="padding: 0.5rem 1rem; text-decoration: none;">Найти друзей</a>
+                                <a href="{% url 'groups_list' %}" class="btn-primary" style="padding: 0.5rem 1rem; text-decoration: none;">Найти сообщества</a>
                             </div>
                         {% endif %}
                     </div>

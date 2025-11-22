@@ -104,7 +104,6 @@ def group_create(request):
             defaults={'is_subscribed': True}
         )
         
-        messages.success(request, f'Сообщество "{group.name}" успешно создано!')
         return redirect('group_detail', group_id=group.id)
     
     return render(request, 'groups/group_create.html', {
@@ -130,10 +129,6 @@ def group_detail(request, group_id):
                 subscription.is_subscribed = not subscription.is_subscribed
                 subscription.save()
             
-            if subscription.is_subscribed:
-                messages.success(request, f'Вы подписались на группу "{group.name}"')
-            else:
-                messages.info(request, f'Вы отписались от группы "{group.name}"')
             return redirect('group_detail', group_id=group.id)
         
         # Создание поста
@@ -153,7 +148,6 @@ def group_detail(request, group_id):
                 if image:
                     post.image = image
                     post.save()
-                messages.success(request, 'Пост успешно опубликован!')
             return redirect('group_detail', group_id=group.id)
         
         # Лайк поста группы
@@ -164,7 +158,6 @@ def group_detail(request, group_id):
                 like, created = GroupPostLike.objects.get_or_create(post=post, user=request.user)
                 if not created:
                     like.delete()
-                    messages.info(request, 'Лайк убран')
                 else:
                     # Уведомление
                     if post.author != request.user:
@@ -174,7 +167,6 @@ def group_detail(request, group_id):
                             from_user=request.user,
                             group_post=post
                         )
-                    messages.success(request, 'Лайк поставлен')
             except GroupPost.DoesNotExist:
                 messages.error(request, 'Пост не найден')
             referer = request.META.get('HTTP_REFERER', 'group_detail')
@@ -202,7 +194,6 @@ def group_detail(request, group_id):
                             from_user=request.user,
                             group_post=post
                         )
-                    messages.success(request, 'Комментарий добавлен')
                 except GroupPost.DoesNotExist:
                     messages.error(request, 'Пост не найден')
             referer = request.META.get('HTTP_REFERER', 'group_detail')
@@ -218,7 +209,6 @@ def group_detail(request, group_id):
                 like, created = GroupPostCommentLike.objects.get_or_create(comment=comment, user=request.user)
                 if not created:
                     like.delete()
-                    messages.info(request, 'Лайк убран')
                 else:
                     # Уведомление
                     if comment.author != request.user:
@@ -228,7 +218,6 @@ def group_detail(request, group_id):
                             from_user=request.user,
                             group_comment=comment
                         )
-                    messages.success(request, 'Лайк поставлен')
             except GroupPostComment.DoesNotExist:
                 messages.error(request, 'Комментарий не найден')
             referer = request.META.get('HTTP_REFERER', 'group_detail')
@@ -243,7 +232,6 @@ def group_detail(request, group_id):
                 post = GroupPost.objects.get(id=post_id, group=group)
                 if post.can_delete(request.user):
                     post.delete()
-                    messages.success(request, 'Пост удален')
                 else:
                     messages.error(request, 'У вас нет прав для удаления этого поста')
             except GroupPost.DoesNotExist:
@@ -260,7 +248,6 @@ def group_detail(request, group_id):
                     user=request.user,
                     defaults={'rating': rating_bool}
                 )
-                messages.success(request, f'Вы поставили {"положительный" if rating_bool else "отрицательный"} рейтинг')
             return redirect('group_detail', group_id=group.id)
         
         # Добавление редактора
@@ -282,7 +269,6 @@ def group_detail(request, group_id):
                         if not created:
                             member.role = 'editor'
                             member.save()
-                        messages.success(request, f'{editor_user.username} добавлен как редактор')
                 except User.DoesNotExist:
                     messages.error(request, 'Пользователь не найден')
             return redirect('group_detail', group_id=group.id)
@@ -299,7 +285,6 @@ def group_detail(request, group_id):
                         messages.error(request, 'Нельзя удалить владельца группы')
                     else:
                         member.delete()
-                        messages.success(request, 'Редактор удален')
                 except GroupMember.DoesNotExist:
                     messages.error(request, 'Участник не найден')
             return redirect('group_detail', group_id=group.id)
@@ -311,7 +296,6 @@ def group_detail(request, group_id):
             else:
                 group_name = group.name
                 group.delete()
-                messages.success(request, f'Сообщество "{group_name}" успешно удалено')
                 return redirect('my_groups')
     
     # Получаем посты группы
@@ -426,7 +410,6 @@ def group_delete(request, group_id):
     if request.method == 'POST':
         group_name = group.name
         group.delete()
-        messages.success(request, f'Сообщество "{group_name}" успешно удалено')
         return redirect('my_groups')
     
     return render(request, 'groups/group_delete.html', {

@@ -13,7 +13,8 @@
 <body>
     <header>
         <nav>
-            <ul>
+            <button class="mobile-menu-toggle" aria-label="Меню">☰</button>
+            <ul class="nav-menu">
                 {% if user.is_authenticated %}
                     <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
                     <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
@@ -32,16 +33,6 @@
     </header>
 
     <main>
-        {% if messages %}
-        <div class="messages-container">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
         {% block content %}
         {% endblock %}
     </main>
@@ -51,8 +42,25 @@
     </footer>
 
     <script>
-        // Live Search для всех поисковых форм
+        // Mobile menu toggle
         document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.querySelector('.mobile-menu-toggle');
+            const navMenu = document.querySelector('.nav-menu');
+            
+            if (menuToggle && navMenu) {
+                menuToggle.addEventListener('click', function() {
+                    navMenu.classList.toggle('active');
+                });
+                
+                // Close menu when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (!navMenu.contains(event.target) && !menuToggle.contains(event.target)) {
+                        navMenu.classList.remove('active');
+                    }
+                });
+            }
+            
+            // Live Search для всех поисковых форм
             // Находим все поисковые формы (включая формы с id search-form)
             const searchForms = document.querySelectorAll('.search-form, form[id="search-form"]');
             

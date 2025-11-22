@@ -87,7 +87,7 @@ header:hover {
 
 /* Шапка над светлой областью */
 header.scrolled {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.75);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     box-shadow: 0 8px 32px rgba(139, 92, 246, 0.2);
@@ -95,12 +95,44 @@ header.scrolled {
 }
 
 header.scrolled:hover {
-    background: rgba(255, 255, 255, 0.98);
+    background: rgba(255, 255, 255, 0.85);
     box-shadow: 0 12px 40px rgba(139, 92, 246, 0.3);
 }
 
+/* Mobile menu toggle button */
+.mobile-menu-toggle {
+    display: none;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: var(--white);
+    font-size: 1.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-right: 1rem;
+}
+
+.mobile-menu-toggle:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+header.scrolled .mobile-menu-toggle {
+    background: var(--white);
+    color: var(--purple-primary);
+    border-color: var(--purple-lightest);
+}
+
+header.scrolled .mobile-menu-toggle:hover {
+    background: var(--purple-lightest);
+}
+
 /* Навигация */
-nav ul {
+nav {
+    position: relative;
+}
+
+nav ul.nav-menu {
     display: flex;
     list-style: none;
     align-items: center;
@@ -873,8 +905,9 @@ main {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    min-height: 70vh;
-    padding: 2rem 0;
+    min-height: calc(100vh - 120px);
+    padding: 2rem 1rem 2rem 1rem;
+    margin-top: 1rem;
 }
 
 .auth-logo-center {
@@ -1139,6 +1172,17 @@ main {
     transform: translateY(-2px);
 }
 
+.community-item {
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.community-item:hover {
+    border-color: var(--purple-primary);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
 .friend-item > div:first-child {
     display: flex;
     align-items: center;
@@ -1226,6 +1270,8 @@ main {
     border-radius: 24px;
     padding: 1.5rem;
     box-shadow: var(--shadow-xl), var(--shadow-purple);
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .chat-item {
@@ -1525,6 +1571,15 @@ footer {
 }
 
 /* ========== АДАПТИВНОСТЬ ========== */
+.friends-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr 300px;
+    gap: 2rem;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 @media (max-width: 1024px) {
     .profile-layout {
         grid-template-columns: 2fr 1fr;
@@ -1534,6 +1589,15 @@ footer {
         min-width: 280px;
         max-width: 320px;
     }
+    
+    .friends-layout {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    
+    .chat-container > div[style*="grid"] {
+        grid-template-columns: 1fr !important;
+    }
 }
 
 @media (max-width: 768px) {
@@ -1541,29 +1605,73 @@ footer {
         padding: 1rem;
     }
     
-    nav ul {
-        flex-wrap: wrap;
+    .mobile-menu-toggle {
+        display: block;
+    }
+    
+    nav ul.nav-menu {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 280px;
+        height: 100vh;
+        background: rgba(124, 58, 237, 0.98);
+        backdrop-filter: blur(20px);
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 2rem 1.5rem;
+        gap: 1rem;
+        transition: left 0.3s ease;
+        z-index: 2000;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+        overflow-y: auto;
+    }
+    
+    nav ul.nav-menu.active {
+        left: 0;
+    }
+    
+    nav ul.nav-menu li {
+        width: 100%;
+    }
+    
+    nav ul.nav-menu .nav-left,
+    nav ul.nav-menu .nav-right {
+        flex-direction: column;
+        width: 100%;
+        margin: 0;
         gap: 0.5rem;
     }
     
-    .nav-left,
-    .nav-right {
-        margin: 0;
-        justify-content: center;
+    nav ul.nav-menu .nav-center {
         width: 100%;
-        order: 2;
+        margin: 0;
+        justify-content: flex-start;
+        order: -1;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        margin-bottom: 1rem;
     }
     
-    .nav-center {
-        order: 1;
-        margin: 0;
+    nav ul.nav-menu a {
         width: 100%;
-        justify-content: center;
+        padding: 1rem;
+        font-size: 1rem;
+        justify-content: flex-start;
     }
     
-    nav a {
-        padding: 0.6rem 1rem;
-        font-size: 0.9rem;
+    nav ul.nav-menu .nav-left,
+    nav ul.nav-menu .nav-right {
+        margin: 0;
+        justify-content: flex-start;
+        width: 100%;
+    }
+    
+    nav ul.nav-menu .nav-center {
+        order: -1;
+        margin: 0;
+        width: 100%;
+        justify-content: flex-start;
     }
     
     main {

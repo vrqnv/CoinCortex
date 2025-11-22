@@ -1,44 +1,10 @@
 <!-- templates/registration/delete_account.html -->
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'style.css' %}">
-    <title>Удаление аккаунта</title>
-</head>
-<body>
-    <header>
-        <nav>
-            <ul>
-                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
-                <li class="nav-left"><a href="{% url 'chat' %}">Чаты</a></li>
-                <li class="nav-left"><a href="{% url 'groups_list' %}">Сообщества</a></li>
-                {% if user.is_authenticated %}
-                    <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
-                    <li class="nav-right">
-                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="logout-btn">Выйти</button>
-                        </form>
-                    </li>
-                {% endif %}
-            </ul>
-        </nav>
-    </header>
+{% extends "base.html" %}
+{% load static %}
 
-    <main>
-        {% if messages %}
-        <div class="messages-container">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
+{% block title %}Удаление аккаунта{% endblock %}
 
+{% block content %}
         <div class="auth-container">
             <div class="auth-card" style="max-width: 500px;">
                 <div class="card-header" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
@@ -60,7 +26,7 @@
                             <label class="form-label">Для подтверждения введите: <strong>DELETE</strong></label>
                             <input type="text" name="confirm" class="form-control" placeholder="DELETE" required>
                         </div>
-                        <div class="form-actions">
+                        <div class="form-actions" style="text-align: center;">
                             <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">Удалить аккаунт</button>
                         </div>
                     </form>
@@ -70,11 +36,5 @@
                 </div>
             </div>
         </div>
-    </main>
-
-    <footer>
-        <p>CoinCortex 2025</p>
-    </footer>
-</body>
-</html>
+{% endblock %}
 
