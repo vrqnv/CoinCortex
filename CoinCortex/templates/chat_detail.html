@@ -1,38 +1,10 @@
 <!-- templates/chat_detail.html -->
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'style.css' %}">
-    <title>Чат с {{ other_user.username }}</title>
-</head>
-<body>
-    <header>
-        <nav>
-            <ul>
-                <li class="nav-left"><a href="{% url 'index' %}">Главная</a></li>
-                <li class="nav-left"><a href="{% url 'chat' %}">← Назад к чатам</a></li>
-                {% if user.is_authenticated %}
-                    <li class="nav-right"><a href="{% url 'notifications' %}">Уведомления</a></li>
-                    <li class="nav-right"><a href="{% url 'friends' %}">Друзья</a></li>
-                    <li class="nav-right"><a href="{% url 'profile' %}">Профиль</a></li>
-                    <li class="nav-right">
-                        <form method="post" action="{% url 'loginout' %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="logout-btn">Выйти</button>
-                        </form>
-                    </li>
-                {% else %}
-                    <li class="nav-right"><a href="{% url 'login' %}">Войти</a></li>
-                    <li class="nav-right"><a href="{% url 'register' %}">Регистрация</a></li>
-                {% endif %}
-            </ul>
-        </nav>
-    </header>
+{% extends "base.html" %}
+{% load static %}
 
-    <main>
+{% block title %}Чат с {{ other_user.username }}{% endblock %}
+
+{% block content %}
         <div class="chat-detail-container">
             <div class="chat-header">
                 <div class="chat-user-info">
@@ -76,11 +48,6 @@
                 </form>
             </div>
         </div>
-    </main>
-
-    <footer>
-        <p>CoinCortex 2025</p>
-    </footer>
 
     <script>
         // Автопрокрутка к последнему сообщению
@@ -89,5 +56,4 @@
             container.scrollTop = container.scrollHeight;
         });
     </script>
-</body>
-</html>
+{% endblock %}
